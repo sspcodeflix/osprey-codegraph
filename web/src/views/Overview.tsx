@@ -144,7 +144,7 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
           <div className="card">
             <div className="card-head">
               <h3>🔥 Most depended-on code</h3>
-              <input className="tablesearch" placeholder="⌕ Filter symbols"
+              <input className="tablesearch" placeholder="Filter symbols"
                      value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
             <p className="muted">Changes here ripple widest: click one to see

@@ -51,7 +51,13 @@ body {
 .spacebtn:hover { color: var(--text-primary); }
 .spacebtn.active { background: var(--accent-dim); color: var(--text-primary);
   font-weight: 600; }
-.spaceicon { color: var(--accent); width: 18px; text-align: center; }
+.spaceicon {
+  color: var(--accent); width: 18px; display: inline-flex;
+  align-items: center; justify-content: center; flex: none;
+}
+.sidesearch span { display: inline-flex; align-items: center; gap: 7px; }
+.addchip { display: inline-flex; align-items: center; gap: 7px;
+  justify-content: center; }
 .subnav-group { display: flex; flex-direction: column; }
 .subnav { background: none; border: none; border-left: 2px solid var(--border);
   color: var(--text-muted); font: inherit; font-size: 13px;

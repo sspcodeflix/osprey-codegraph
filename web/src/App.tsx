@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { api, JobStatus, Repo, Snapshot } from "./api"
 import { Focus, FocusContext } from "./focus"
 import { Palette } from "./Palette"
+import { DocsIcon, ExploreIcon, OverviewIcon, PlusIcon, SearchIcon } from "./icons"
 import { Explore, Lens, LENSES } from "./spaces/Explore"
 import { OverviewSub, Understand } from "./spaces/Understand"
 import { Ask } from "./views/Ask"
@@ -10,8 +11,8 @@ import { Docs, PERSONA_LABELS, PERSONAS } from "./views/Docs"
 const SPACES = ["Overview", "Explore", "Documentation"] as const
 type Space = (typeof SPACES)[number]
 
-const SPACE_ICONS: Record<Space, string> = {
-  Overview: "◫", Explore: "◎", Documentation: "▤",
+const SPACE_ICONS: Record<Space, () => JSX.Element> = {
+  Overview: OverviewIcon, Explore: ExploreIcon, Documentation: DocsIcon,
 }
 
 const fmtDate = (iso: string) =>
@@ -181,7 +182,7 @@ export default function App() {
           <h1>🦅 <span className="brand">Osprey</span></h1>
           <button className="sidesearch" onClick={() => setPaletteOpen(true)}
                   title="Jump to any symbol, doc, or action: press / or ⌘K">
-            <span>⌕ Search</span><kbd>/</kbd>
+            <span><SearchIcon /> Search</span><kbd>/</kbd>
           </button>
           <nav className="sidenav-spaces">
             {SPACES.map((s) => (
@@ -191,15 +192,15 @@ export default function App() {
                           setSpace(s)
                           if (s === "Overview") setOverviewSub("glance")
                         }}>
-                  <span className="spaceicon">{SPACE_ICONS[s]}</span>{s}
+                  <span className="spaceicon">{SPACE_ICONS[s]()}</span>{s}
                 </button>
                 <div className="subnav-group">{subnav(s)}</div>
               </div>
             ))}
           </nav>
           <div className="sidenav-foot">
-            <button className="chip" onClick={() => setAdding(!adding)}>
-              ＋ Add repo</button>
+            <button className="chip addchip" onClick={() => setAdding(!adding)}>
+              <PlusIcon /> Add repo</button>
           </div>
         </aside>
 
