@@ -47,9 +47,10 @@ export function Ask({ snap, focusName }: {
 
   return (
     <div className="view">
-      <p className="explain">Ask questions in plain English. The assistant
-        can only use Osprey's verified graph tools - every answer shows
-        which checks it ran, and runs entirely on this machine.</p>
+      <p className="explain">Ask about this codebase in plain English. The
+        assistant answers only from Osprey's verified graph tools - every
+        answer shows which checks it ran. It won't help with anything
+        outside this repository.</p>
       <div className="scroll chat">
         {messages.length === 0 && (
           <div className="hint">
