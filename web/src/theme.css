@@ -36,7 +36,38 @@ body {
   color: var(--text-primary);
   font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-#root { display: flex; flex-direction: column; height: 100vh; }
+#root { height: 100vh; }
+.shell { display: flex; height: 100vh; }
+.sidenav { width: 216px; flex: none; background: var(--surface-1);
+  border-right: 1px solid var(--border); display: flex;
+  flex-direction: column; padding: 16px 10px; gap: 14px; }
+.sidenav h1 { font-size: 17px; margin: 0 0 4px 8px; letter-spacing: 0.02em;
+  font-weight: 700; }
+.sidenav-spaces { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.spacebtn { display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: none; color: var(--text-secondary);
+  font: inherit; font-size: 14.5px; padding: 9px 12px; border-radius: 9px;
+  cursor: pointer; text-align: left; }
+.spacebtn:hover { color: var(--text-primary); }
+.spacebtn.active { background: var(--accent-dim); color: var(--text-primary);
+  font-weight: 600; }
+.spaceicon { color: var(--accent); width: 18px; text-align: center; }
+.subnav-group { display: flex; flex-direction: column; }
+.subnav { background: none; border: none; border-left: 2px solid var(--border);
+  color: var(--text-muted); font: inherit; font-size: 13px;
+  padding: 5px 12px; margin-left: 20px; cursor: pointer; text-align: left; }
+.subnav:hover { color: var(--text-primary); }
+.subnav.active { color: var(--text-primary); border-left-color: var(--accent);
+  font-weight: 600; }
+.sidenav-foot { display: flex; flex-direction: column; gap: 8px; }
+.sidenav-foot .chip { text-align: center; }
+.shell-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.userchip { display: flex; align-items: center; gap: 8px;
+  color: var(--text-secondary); font-size: 13px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent);
+  color: var(--accent-hover); font-weight: 700; font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center; }
 
 ::selection { background: var(--accent-dim); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

@@ -49,31 +49,49 @@ class GenStats:
 
 # ---------------------------------------------------------------- outline
 
-def outline(conn, snap: int) -> list[PageSpec]:
-    """The doc tree is a computation over the graph, never an LLM guess."""
-    pages = [
-        PageSpec("overview", "Overview", "overview", 0),
-        PageSpec("architecture", "Architecture", "architecture", 1),
-    ]
-    mods = conn.execute("""
-        SELECT COALESCE(regexp_replace(f.path,'/[^/]+$',''),'') AS module,
-               sum(f.loc)::int AS loc
-        FROM files f WHERE f.snapshot_id=%s
-          AND f.path !~ '(^|/)(tests?|__tests__|runtime-tests|benchmarks?)(/|$)'
-        GROUP BY 1 ORDER BY 2 DESC LIMIT %s
-        """, (snap, MODULE_PAGES)).fetchall()
-    for i, m in enumerate(mods):
-        mod = m["module"] or "(root)"
-        slug = "modules/" + (m["module"].replace("/", "-") or "root")
-        pages.append(PageSpec(slug, mod, "module", 10 + i,
-                              parent_slug="architecture",
-                              module=m["module"]))
-    n_entries = conn.execute(
-        "SELECT count(*) AS n FROM symbols WHERE snapshot_id=%s"
-        " AND entry_kind IS NOT NULL", (snap,)).fetchone()["n"]
-    if n_entries:
-        pages.append(PageSpec("entry-points", "Entry points", "entries", 40))
-    pages.append(PageSpec("key-functions", "Key functions", "hot", 50))
+def outline(conn, snap: int, persona: str) -> list[PageSpec]:
+    """The doc tree is a computation over the graph, never an LLM guess.
+    Which pages exist depends on the persona's job, not on the model."""
+    wanted = PERSONAS[persona]["pages"]
+    titles = {"overview": "Overview", "architecture": "Architecture",
+              "entries": "Entry points", "hot": "Key functions"}
+    if persona == "sre":
+        titles.update({"entries": "Where execution enters",
+                       "hot": "Widest blast radius",
+                       "architecture": "Failure domains"})
+    if persona == "tester":
+        titles.update({"hot": "Regression risk",
+                       "entries": "Surfaces to exercise",
+                       "architecture": "Integration seams"})
+    pages: list[PageSpec] = []
+    pos = 0
+    for kind in wanted:
+        if kind == "modules":
+            mods = conn.execute("""
+                SELECT COALESCE(regexp_replace(f.path,'/[^/]+$',''),'')
+                       AS module, sum(f.loc)::int AS loc
+                FROM files f WHERE f.snapshot_id=%s
+                  AND f.path !~ '(^|/)(tests?|__tests__|runtime-tests|benchmarks?)(/|$)'
+                GROUP BY 1 ORDER BY 2 DESC LIMIT %s
+                """, (snap, MODULE_PAGES)).fetchall()
+            for m in mods:
+                mod = m["module"] or "(root)"
+                slug = "modules/" + (m["module"].replace("/", "-") or "root")
+                pos += 1
+                pages.append(PageSpec(slug, mod, "module", 10 + pos,
+                                      parent_slug="architecture",
+                                      module=m["module"]))
+            continue
+        if kind == "entries":
+            n = conn.execute(
+                "SELECT count(*) AS n FROM symbols WHERE snapshot_id=%s"
+                " AND entry_kind IS NOT NULL", (snap,)).fetchone()["n"]
+            if not n:
+                continue
+        pos += 10
+        slug = {"overview": "overview", "architecture": "architecture",
+                "entries": "entry-points", "hot": "key-functions"}[kind]
+        pages.append(PageSpec(slug, titles[kind], kind, pos))
     return pages
 
 
@@ -199,11 +217,7 @@ def _diagram(conn, snap: int, spec: PageSpec) -> str | None:
 
 # ------------------------------------------------------------- synthesize
 
-SYSTEM = """You write onboarding documentation for engineers new to the
-codebase '{repo}'. Audience: a capable engineer on day one. Plain, direct
-language; short sections with ## headings; explain what things are FOR, not
-just what they are.
-
+SHARED_RULES = """
 HARD RULES:
 - Base every claim on the provided FACTS and SOURCE. Do not invent files,
   functions, or behavior.
@@ -219,33 +233,101 @@ HARD RULES:
 - No preamble, no meta-commentary. Output markdown body only (no H1 —
   the title is added by the system)."""
 
-PAGE_BRIEFS = {
-    "overview": "Write the 'what is this codebase' page: purpose (infer "
-        "carefully from names/source), size and languages, how the pieces "
-        "fit at a glance, and what to read next.",
-    "architecture": "Explain the module structure and the main dependency "
-        "directions using the module_dependencies facts: which parts are "
-        "foundations, which are consumers.",
-    "module": "Document this module for a newcomer: its job, its key public "
-        "symbols (cite each), what it uses and what uses it.",
-    "entries": "Explain where execution enters this codebase (HTTP routes, "
-        "CLI commands, main guards) and what each entry area is for.",
-    "hot": "Describe the most-called functions: what each does and why so "
-        "much depends on it. These are the functions to read first.",
+PERSONAS: dict[str, dict] = {
+    "onboarding": {
+        "label": "Developer",
+        "voice": "You write onboarding documentation for engineers new to "
+            "the codebase '{repo}'. Audience: a capable engineer on day "
+            "one. Plain, direct language; short sections with ## headings; "
+            "explain what things are FOR, not just what they are.",
+        "pages": ["overview", "architecture", "modules", "entries", "hot"],
+        "briefs": {
+            "overview": "Write the 'what is this codebase' page: purpose "
+                "(infer carefully from names/source), size and languages, "
+                "how the pieces fit at a glance, and what to read next.",
+            "architecture": "Explain the module structure and the main "
+                "dependency directions: which parts are foundations, which "
+                "are consumers.",
+            "module": "Document this module for a newcomer: its job, its "
+                "key public symbols (cite each), what it uses and what "
+                "uses it.",
+            "entries": "Explain where execution enters this codebase (HTTP "
+                "routes, CLI commands, main guards) and what each entry "
+                "area is for.",
+            "hot": "Describe the most-called functions: what each does and "
+                "why so much depends on it. These are the functions to "
+                "read first.",
+        },
+    },
+    "sre": {
+        "label": "SRE / On-call",
+        "voice": "You write operational documentation for SREs and on-call "
+            "engineers responsible for '{repo}' in production. Audience: "
+            "the person paged at 3am who did not write this code. Focus on "
+            "where execution enters, what is most load-bearing, and how "
+            "failures would propagate. Be direct and practical; never "
+            "invent runbooks or infrastructure that the code does not show.",
+        "pages": ["overview", "entries", "hot", "architecture"],
+        "briefs": {
+            "overview": "Operational overview: what this system does, its "
+                "major moving parts, and which parts are most load-bearing "
+                "(judge by dependency weight, not guesswork).",
+            "entries": "Where execution enters this codebase — routes, CLI "
+                "commands, main scripts. During an incident these are the "
+                "first places to look; say what each entry area serves.",
+            "hot": "The most-depended-on functions: a failure or "
+                "regression here has the widest blast radius. For each, "
+                "say what it does and what would be affected if it "
+                "misbehaved.",
+            "architecture": "Failure domains: which parts depend on which, "
+                "so an on-call engineer can reason about how an outage in "
+                "one area propagates to others.",
+        },
+    },
+    "tester": {
+        "label": "QA / Tester",
+        "voice": "You write test-planning documentation for QA engineers "
+            "approaching '{repo}'. Audience: a tester deciding where to "
+            "spend limited testing time. Focus on risk: what has the most "
+            "dependents (regression risk), what surfaces users hit (entry "
+            "points), and where integration seams are. You have NO "
+            "coverage data — never claim something is tested or untested; "
+            "reason only from structure.",
+        "pages": ["overview", "hot", "entries", "architecture"],
+        "briefs": {
+            "overview": "Testing overview: size and shape of the codebase, "
+                "and where structural risk concentrates (judge by "
+                "dependency weight).",
+            "hot": "Highest regression-risk functions: the most-called "
+                "code — a defect here surfaces everywhere. Prioritize "
+                "these paths for regression tests; say what behavior to "
+                "pin for each.",
+            "entries": "The user-facing surfaces (routes, CLI commands, "
+                "main scripts) to exercise end-to-end; say what flows "
+                "through each.",
+            "architecture": "Dependency structure as integration-test "
+                "seams: which module boundaries carry the most traffic "
+                "and deserve contract/integration tests.",
+        },
+    },
 }
 
 
 def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
-                    source_root: Path | None, stats: GenStats) -> str:
+                    source_root: Path | None, stats: GenStats,
+                    persona: str) -> str:
     facts = _facts(conn, snap, spec, repo)
+    persona_cfg = PERSONAS[persona]
     prompt = (
-        f"PAGE: {spec.title}\nBRIEF: {PAGE_BRIEFS[spec.kind]}\n\n"
+        f"PAGE: {spec.title}\nBRIEF: {persona_cfg['briefs'][spec.kind]}\n\n"
         f"FACTS (from the verified code graph):\n"
         f"{json.dumps(facts, default=str)[:9000]}\n\n"
         f"SOURCE EXCERPTS:\n{_source_slices(source_root, facts)}"
     )
     messages = [
-        {"role": "system", "content": SYSTEM.format(repo=repo)},
+        {"role": "system",
+         "content": persona_cfg["voice"].format(repo=repo) + "\n"
+         + SHARED_RULES},
         {"role": "user", "content": prompt},
     ]
     resp = provider.chat(messages, [])
@@ -374,9 +456,12 @@ def generate_docs(snapshot_id: int, persona: str,
 
         conn.execute("DELETE FROM doc_pages WHERE snapshot_id=%s"
                      " AND persona=%s", (snapshot_id, persona))
-        for spec in outline(conn, snapshot_id):
+        if persona not in PERSONAS:
+            raise RuntimeError(f"unknown persona {persona!r}; "
+                               f"available: {sorted(PERSONAS)}")
+        for spec in outline(conn, snapshot_id, persona):
             body = synthesize_page(provider, conn, snapshot_id, spec, repo,
-                                   source_root, stats)
+                                   source_root, stats, persona)
             _, bad = _check_citations(conn, snapshot_id, body)
             status = "verified" if not bad else "draft"
             page = conn.execute(

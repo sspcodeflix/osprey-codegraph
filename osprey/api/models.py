@@ -217,6 +217,11 @@ class DocPageOut(BaseModel):
     persona: str
 
 
+class MeOut(BaseModel):
+    user: str
+    auth: str
+
+
 class DocsGenerateIn(BaseModel):
     snapshot_id: int
     persona: str = "onboarding"

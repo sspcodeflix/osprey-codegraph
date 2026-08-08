@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     # container images set this explicitly (the package is installed to
     # site-packages there, so repo-relative resolution has no meaning)
     ui_dist: str = ""
+    # top-bar identity chip until SSO lands (OSPREY_USER_LABEL)
+    user_label: str = "Local Dev"
     # where osprey-mcp (and other API clients) reach the query API
     api_url: str = "http://127.0.0.1:8800"
     # traversal cost bounds (ARCHITECTURE.md §7)

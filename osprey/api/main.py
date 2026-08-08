@@ -755,6 +755,14 @@ def docs_page(snap: int, persona: str, slug: str, conn=Depends(db)):
     return {**row, "commit": s["commit_sha"], "persona": persona}
 
 
+@app.get("/v1/me", response_model=M.MeOut)
+def me():
+    """Who is using this instance. Real identity arrives with SSO; until
+    then this is the honest configurable label for the top-bar chip."""
+    return {"user": settings.user_label,
+            "auth": "token" if settings.api_token else "local"}
+
+
 @app.post("/v1/docs/generate", response_model=M.IndexJobOut)
 def docs_generate(body: M.DocsGenerateIn,
                   authorization: Annotated[str | None, Header()] = None):
@@ -762,6 +770,10 @@ def docs_generate(body: M.DocsGenerateIn,
     the LLM provider and source checkout live)."""
     if settings.api_token and authorization != f"Bearer {settings.api_token}":
         raise HTTPException(401, "missing or invalid bearer token")
+    from osprey.docs.pipeline import PERSONAS
+    if body.persona not in PERSONAS:
+        raise HTTPException(400, f"unknown persona {body.persona!r}; "
+                            f"available: {sorted(PERSONAS)}")
     import json as _json
     with pool.connection() as conn:
         snap = conn.execute(

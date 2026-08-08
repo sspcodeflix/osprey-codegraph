@@ -70,6 +70,7 @@ export const api = {
   overview: (snap: number) => get<Overview>(`/v1/snapshots/${snap}/overview`),
   cycles: (snap: number) => get<{ count: number; cycles: string[][] }>(`/v1/snapshots/${snap}/modules/cycles`),
   hotspots: (snap: number) => get<Hotspot[]>(`/v1/snapshots/${snap}/hotspots?limit=10`),
+  me: () => get<{ user: string; auth: string }>("/v1/me"),
   indexRepo: (git_url: string, ref?: string) =>
     post<IndexJob>("/v1/repos/index", { git_url, ref: ref || null }),
   ask: (snap: number, question: string, history: { role: string; content: string }[]) =>

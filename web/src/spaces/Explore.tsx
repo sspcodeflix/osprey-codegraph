@@ -1,16 +1,14 @@
-import { useState } from "react"
 import { Symbol as Sym } from "../api"
 import { useFocus } from "../focus"
 import { BlastRadius } from "../views/BlastRadius"
 import { Flow } from "../views/Flow"
 import { ModuleMap } from "../views/ModuleMap"
 
-const LENSES = ["Map", "Blast radius", "Sequence"] as const
-type Lens = (typeof LENSES)[number]
+export const LENSES = ["Map", "Blast radius", "Sequence"] as const
+export type Lens = (typeof LENSES)[number]
 
-export function Explore({ snap }: { snap: number }) {
+export function Explore({ snap, lens }: { snap: number; lens: Lens }) {
   const { focus, setFocus } = useFocus()
-  const [lens, setLens] = useState<Lens>("Map")
 
   const symbolPreset = focus?.kind === "symbol" && focus.id != null
     ? { symbol_id: focus.id, id: focus.id, name: focus.name, kind: "function",
@@ -24,16 +22,8 @@ export function Explore({ snap }: { snap: number }) {
 
   return (
     <div className="view" style={{ gap: 8 }}>
-      <div className="controls">
-        <nav className="lenses">
-          {LENSES.map((l) => (
-            <button key={l} className={l === lens ? "active" : ""}
-                    onClick={() => setLens(l)}>{l}</button>
-          ))}
-        </nav>
-        {!focus && <span className="muted">Select anything — a folder on the
-          map, a function via ⌘K — and every lens follows it.</span>}
-      </div>
+      {!focus && <p className="explain">Select anything — a folder on the
+        map, a function via ⌘K — and every lens follows it.</p>}
       {lens === "Map" && (
         <ModuleMap key={snap} snap={snap}
           focusModule={focus?.kind === "module" ? focus.module

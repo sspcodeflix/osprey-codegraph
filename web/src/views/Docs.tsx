@@ -4,7 +4,11 @@ import remarkGfm from "remark-gfm"
 import { api, DocPage, DocPageMeta } from "../api"
 import { Mermaid } from "../Mermaid"
 
-const PERSONAS = [["onboarding", "New engineer"]] as const
+const PERSONAS = [
+  ["onboarding", "Developer"],
+  ["sre", "SRE / On-call"],
+  ["tester", "QA / Tester"],
+] as const
 
 export function Docs({ snap }: { snap: number }) {
   const [persona, setPersona] = useState<string>("onboarding")
@@ -69,8 +73,14 @@ export function Docs({ snap }: { snap: number }) {
                 graph: diagrams are compiled from real dependencies, and
                 every <code>file:line</code> citation is verified against
                 the snapshot before publishing.</p>
+              <select value={persona}
+                      onChange={(e) => setPersona(e.target.value)}
+                      style={{ marginRight: 8 }}>
+                {PERSONAS.map(([v, label]) =>
+                  <option key={v} value={v}>{label}</option>)}
+              </select>
               <button className="chip" onClick={generate}>
-                Generate onboarding docs</button>
+                Generate docs for this audience</button>
             </>
           )}
           {error && <div className="error">{error}</div>}
