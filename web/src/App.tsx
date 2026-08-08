@@ -138,6 +138,10 @@ export default function App() {
       <div className="shell">
         <aside className="sidenav">
           <h1>🦅 <span className="brand">Osprey</span></h1>
+          <button className="sidesearch" onClick={() => setPaletteOpen(true)}
+                  title="Jump to any symbol, doc, or action">
+            <span>⌕ Search</span><kbd>⌘K</kbd>
+          </button>
           <nav className="sidenav-spaces">
             {SPACES.map((s) => (
               <div key={s}>
@@ -152,8 +156,6 @@ export default function App() {
           <div className="sidenav-foot">
             <button className="chip" onClick={() => setAdding(!adding)}>
               ＋ Add repo</button>
-            <button className="chip" onClick={() => setPaletteOpen(true)}
-                    title="Jump to anything">⌘K search</button>
           </div>
         </aside>
 
@@ -219,13 +221,26 @@ export default function App() {
             <div className="space-body">
               {error && <div className="error">{error}</div>}
               {snap == null
-                ? <div className="hint">No analyzed versions yet. Paste a
-                    GitHub URL via <b>＋ Add repo</b>, or index a local
-                    checkout: <code>osprey index /path --name myrepo</code></div>
+                ? <div className="cta-card">
+                    <div className="cta-icon">🦅</div>
+                    <h2>Understand any codebase in minutes</h2>
+                    <p className="muted">Paste a repository URL and Osprey maps
+                      its structure, finds the risks, and writes grounded
+                      documentation — every claim checked against the code.</p>
+                    <button className="primary" onClick={() => setAdding(true)}>
+                      ＋ Add repository</button>
+                    <p className="muted small">or index a local checkout:{" "}
+                      <code>osprey index /path --name myrepo</code></p>
+                  </div>
                 : (
                   <>
                     {space === "Understand" && (
                       <Understand snap={snap} mode={understandMode}
+                        prevSnap={(() => {
+                          const i = snapshots.findIndex((s) => s.id === snap)
+                          return i >= 0 ? snapshots[i + 1]?.id ?? null : null
+                        })()}
+                        onDocs={() => setUnderstandMode("docs")}
                         onGuard={(sub) => { setSpace("Guard"); setGuardSub(sub as GuardSub) }} />
                     )}
                     {space === "Explore" && <Explore snap={snap} lens={exploreLens} />}

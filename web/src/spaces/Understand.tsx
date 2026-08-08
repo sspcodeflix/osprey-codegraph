@@ -4,10 +4,12 @@ import { useFocus } from "../focus"
 import { Docs } from "../views/Docs"
 import { Overview } from "../views/Overview"
 
-export function Understand({ snap, mode, onGuard }: {
+export function Understand({ snap, prevSnap, mode, onGuard, onDocs }: {
   snap: number
+  prevSnap: number | null
   mode: "glance" | "docs"
   onGuard: (sub: string) => void
+  onDocs: () => void
 }) {
   const { setFocus } = useFocus()
 
@@ -19,9 +21,9 @@ export function Understand({ snap, mode, onGuard }: {
   return (
     <div className="view" style={{ gap: 8 }}>
       {mode === "glance"
-        ? <Overview key={snap} snap={snap}
-            onNavigate={(t) => t === "Health" || t === "Cleanup"
-              ? onGuard(t) : undefined}
+        ? <Overview key={snap} snap={snap} prevSnap={prevSnap}
+            onNavigate={(t) => t === "Docs" ? onDocs()
+              : t === "Health" || t === "Cleanup" ? onGuard(t) : undefined}
             onPickHotspot={pickHotspot} />
         : <Docs key={snap} snap={snap} />}
     </div>
