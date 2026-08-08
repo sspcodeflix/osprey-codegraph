@@ -175,6 +175,9 @@ CREATE TABLE IF NOT EXISTS doc_chunks (
   embedding   vector(768)
 );
 CREATE INDEX IF NOT EXISTS idx_doc_chunks_snap ON doc_chunks (snapshot_id);
+-- ANN index for /docs-search; opclass must match the <=> cosine operator.
+CREATE INDEX IF NOT EXISTS idx_doc_chunks_embedding ON doc_chunks
+  USING hnsw (embedding vector_cosine_ops);
 
 -- additive migrations for existing databases
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'index';
