@@ -22,6 +22,10 @@ from osprey.api.providers import get_provider
 from osprey.config import settings
 
 CITE_RE = re.compile(r"\b([\w./-]+\.[A-Za-z]{1,4}):(\d{1,6})\b")
+# internal FACTS field names quoted as code in prose = a grounding leak
+FACTS_LEAK_RE = re.compile(
+    r"`(totals|module_dependencies|public_symbols|used_by|entry_points|"
+    r"hotspots)`")
 MAX_SOURCE_CHARS = 6000
 MODULE_PAGES = 6
 
@@ -358,6 +362,30 @@ def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
         if bad:
             body = _strip_bad_citations(body, bad)
             stats.failed_cites_removed += len(bad)
+
+    leaks = FACTS_LEAK_RE.findall(body)
+    if leaks:
+        # the prompt bans these, but the model occasionally quotes a FACTS
+        # field name anyway; one corrective retry, then note what remains
+        stats.retries += 1
+        fix = provider.chat(messages + [
+            {"role": "assistant", "content": body},
+            {"role": "user", "content":
+             "Your draft mentions internal data-plumbing field names "
+             f"({sorted(set(leaks))}) that are NOT part of the codebase. "
+             "Rewrite those sentences in plain prose without the field "
+             "names. Return the full corrected markdown body."}], [])
+        stats.prompt_tokens += fix.usage.get("prompt_tokens", 0)
+        stats.completion_tokens += fix.usage.get("completion_tokens", 0)
+        fixed = _no_em_dashes(fix.text.strip())
+        if fixed and not FACTS_LEAK_RE.search(fixed):
+            body = fixed
+            _, bad = _check_citations(conn, snap, body)
+            if bad:
+                body = _strip_bad_citations(body, bad)
+                stats.failed_cites_removed += len(bad)
+        else:
+            stats.notes.append(f"{spec.slug}: FACTS field name in prose")
 
     diagram = _diagram(conn, snap, spec)
     if diagram:
