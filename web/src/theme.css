@@ -161,6 +161,66 @@ table.dsm td {
 .card h2 { margin: 0 0 6px; font-size: 15px; }
 .card p { margin: 4px 0; }
 .overview { gap: 12px; max-width: 980px; }
+
+/* ---- At-a-glance charts (plain HTML/CSS, dataviz mark specs) ---- */
+.statgrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.stat {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 18px;
+}
+.stat-value { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-label { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+.commitline { font-size: 12px; margin-top: -4px; }
+.cardgrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+.card h3 { margin: 0 0 10px; font-size: 14px; }
+.card.finding.good { border-left-color: var(--series-3); }
+.card.finding.warn { border-left-color: var(--accent); }
+
+/* proportion bar: 2px surface gaps between segments, rounded data-ends */
+.propbar {
+  display: flex; gap: 2px; height: 14px; border-radius: 5px;
+  overflow: hidden; margin: 6px 0 10px;
+}
+.propbar-seg { min-width: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot {
+  width: 9px; height: 9px; border-radius: 3px; display: inline-block;
+}
+
+/* ranked horizontal bars: thin marks, direct value labels, hover row */
+.hbars { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.hbar-row {
+  display: grid; grid-template-columns: minmax(90px, 32%) 1fr auto;
+  align-items: center; gap: 10px; padding: 3px 6px; border-radius: 6px;
+  background: none; border: none; font: inherit; color: inherit;
+  text-align: left; width: 100%;
+}
+.hbar-row.clickable { cursor: pointer; }
+.hbar-row.clickable:hover { background: var(--surface-2); }
+.hbar-label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12.5px;
+}
+.hbar-track { height: 10px; border-radius: 4px; background: var(--surface-2); }
+.hbar-fill { display: block; height: 100%; border-radius: 4px; }
+.hbar-value {
+  font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bignum {
+  font-size: 24px; font-weight: 700; display: flex; align-items: baseline;
+  gap: 8px; margin-bottom: 4px;
+}
+.bignum span { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.bignum.good { color: var(--series-3); }
+.bignum.warn { color: var(--accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .chip {
   background: var(--surface-2); border: 1px solid var(--border);
