@@ -86,11 +86,17 @@ export default function App() {
         e.preventDefault()
         setPaletteOpen(true)
       }
-      if (e.key === "Escape") { setPaletteOpen(false); setAskOpen(false) }
+      if (e.key === "Escape") {
+        // layered: dismiss overlays first; only a bare Esc clears the
+        // selection (never as a side effect of closing something else)
+        if (paletteOpen) setPaletteOpen(false)
+        else if (askOpen) setAskOpen(false)
+        else setFocusState(null)
+      }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [])
+  }, [paletteOpen, askOpen])
 
   // Documentation: picking a persona generates its docs if they don't exist
   // yet, and the job keeps running (and stays visible) across spaces.
