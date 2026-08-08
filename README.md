@@ -1,38 +1,200 @@
-# Osprey
+# 🦅 Osprey
 
-**A code-graph platform for enterprises.** Osprey indexes codebases into a
-deterministic, per-commit knowledge graph and serves three products on one core:
+**Understand any codebase in minutes.** Osprey indexes repositories into a
+compiler-grade dependency graph, then serves visual exploration, grounded
+AI documentation, architecture governance, and a fact-checked chat on one
+core - self-hosted, local-first, air-gap friendly.
 
-1. **See** — visual dependency & impact analysis (blast radius, cycles, layering)
-2. **Govern** — architecture rules enforced in CI via structural graph diffs
-3. **Ask** — an AI interface grounded in graph facts, never in guesses
+![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
+![TypeScript](https://img.shields.io/badge/react-18-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/postgres-16%20%2B%20pgvector-4169E1?logo=postgresql&logoColor=white)
+![License](https://img.shields.io/badge/license-proprietary-red)
 
 Facts come from compilers (via [SCIP](https://github.com/sourcegraph/scip)),
-not heuristics. The graph is useful with no LLM at all; the LLM is an optional
-query surface on top.
+not heuristics. Diagrams are compiled from real edges, never drawn by a
+model. Every documentation claim is cite-checked against the graph before
+it publishes. The graph is useful with no LLM at all; the LLM is an
+optional surface on top.
+
+---
+
+## Features
+
+- **Overview dashboard**: files, languages, symbol composition, circular
+  dependencies, likely-unused code, and the most depended-on symbols -
+  with deltas against the previously analyzed version.
+- **Explore**: interactive dependency map (drill-down by folder, focus
+  spotlighting, plain-language insight for the focused node), blast-radius
+  rings, and static call-sequence diagrams.
+- **Documentation**: persona-targeted docs (Developer, SRE / On-call,
+  QA / Tester) synthesized from the same graph facts. Citations are
+  verified `path:line` by `path:line`; unverifiable claims are retried,
+  then stripped. Generation runs on the worker and survives navigation.
+- **Ask**: a chat drawer that can only use typed graph tools - every
+  answer shows which checks it ran, and it refuses questions that are not
+  about the indexed codebase.
+- **Governance** (`osprey-gate`): declarative architecture rules (layers,
+  deny edges, no new cycles) evaluated as a structural diff between two
+  snapshots - built for CI, with file:line evidence and a markdown
+  PR-comment format.
+- **MCP server** (`osprey-mcp`): 11 typed tools exposing the graph to AI
+  agents; the model never writes a query.
+- **Search everywhere**: `/` or `⌘K` jumps to any symbol, doc page, or
+  action.
+
+## How it works
+
+```mermaid
+flowchart LR
+    R[Repository<br/>URL or local checkout] --> W[Worker<br/>sandboxed fetch + deps]
+    W --> S[SCIP indexers<br/>scip-python / scip-typescript]
+    S --> C[Tree-sitter classifier<br/>CALLS vs REFERENCES]
+    C --> P[(Postgres + pgvector<br/>immutable per-commit snapshots)]
+    P --> A[Read-only typed API]
+    A --> UI[React UI<br/>Overview / Explore / Docs / Ask]
+    A --> G[osprey-gate<br/>CI checks]
+    A --> M[osprey-mcp<br/>agent tools]
+    P --> D[Docs pipeline<br/>outline → synthesize → verify → embed]
+    D --> P
+```
+
+Each analyzed commit is an **immutable snapshot**: symbols, call/import
+edges, module graph, entry points, docs, and embeddings all live in one
+Postgres database and delete together in one cascade.
 
 ## Quick start
 
 ```bash
 docker compose up -d          # db + api + worker
-open http://localhost:8800    # the UI
+open http://localhost:8800
 ```
 
-Then either paste a GitHub URL into **＋ Add repo** in the UI, or index a
-local checkout:
+Paste a GitHub URL into **＋ Add repo** (tag and branch URLs work
+directly), or index a local checkout:
 
 ```bash
 docker compose exec worker osprey repo-add myrepo   # lives in ./m0/myrepo
 docker compose exec worker osprey enqueue myrepo
 ```
 
-Chat (the **Ask** tab) defaults to a local Ollama model; set
-`OSPREY_CHAT_PROVIDER` + the matching API key in `.env` for DeepSeek or
-Anthropic. `docker compose --profile local-chat up -d` bundles Ollama.
+Remote repositories are always fetched and indexed inside a hardened
+container: no network during indexing, install scripts disabled, size
+capped. Every port binds loopback by default.
 
-## Pointers
+### Chat and documentation models
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — full system design, schema, and decision log
-- v1 languages: TypeScript/JavaScript, Python (via SCIP indexers)
-- Deployment: self-hosted; every port binds loopback by default
-- Dev without docker: `uv sync`, `osprey db-init`, `osprey api`, `osprey worker`
+The **Ask** drawer and the docs generator need an LLM. The default is a
+local [Ollama](https://ollama.com) model - nothing leaves the machine.
+
+```bash
+docker compose --profile local-chat up -d   # bundles Ollama
+```
+
+For a hosted model, set in `.env`:
+
+```ini
+OSPREY_CHAT_PROVIDER=deepseek        # ollama | deepseek | anthropic
+OSPREY_DEEPSEEK_API_KEY=sk-...
+```
+
+Doc-search embeddings always run locally (`nomic-embed-text` via Ollama),
+regardless of the chat provider.
+
+## Architecture governance in CI
+
+Declare rules in `osprey.rules.yaml`:
+
+```yaml
+layers:
+  - name: core
+    modules: ["src/core/**"]
+  - name: adapters
+    modules: ["src/adapters/**"]
+deny:
+  - "src/utils/** -> src/middleware/**"
+no_new_cycles: true
+```
+
+Then gate a pull request on the structural diff between two snapshots:
+
+```bash
+osprey-gate check --repo myrepo --base previous --head latest \
+  --rules osprey.rules.yaml --format markdown
+```
+
+Violations come with evidence (`file:line` of the offending import or
+call). The gate fails open by default; `--fail-closed` inverts that.
+
+## Configuration
+
+All settings are environment variables prefixed `OSPREY_` (or an `.env`
+file). The important ones:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OSPREY_DB_DSN` | local compose DB | Postgres connection |
+| `OSPREY_API_TOKEN` | *(empty = dev, no auth)* | bearer token for the API |
+| `OSPREY_CHAT_PROVIDER` | `ollama` | `ollama` \| `deepseek` \| `anthropic` |
+| `OSPREY_CHAT_MODEL` | `qwen3:8b` | model for the default provider |
+| `OSPREY_ALLOWED_GIT_HOSTS` | `github.com,gitlab.com` | paste-a-URL allowlist |
+| `OSPREY_MAX_REPO_MB` | `500` | size cap for fetched repos |
+| `OSPREY_EXECUTOR` | `local` | `container` sandboxes every index stage |
+| `OSPREY_RETENTION_KEEP` | `30` | ready snapshots kept per repo (`osprey gc`) |
+| `OSPREY_USER_LABEL` | `Local Dev` | name shown in the top-right chip |
+
+## Development
+
+```bash
+uv sync                      # python deps
+osprey db-init               # apply schema
+osprey api --port 8800       # API + built UI
+osprey worker                # indexing + docs jobs
+
+cd web && npm install && npm run dev   # UI dev server on :5173
+```
+
+Run the tests:
+
+```bash
+uv run pytest -q             # 65 tests: classifier, gate, API, URL guards
+```
+
+## Project layout
+
+```
+osprey/
+├── osprey/            # python package
+│   ├── api/           #   read-only FastAPI + Ask tool-loop + providers
+│   ├── classifier/    #   tree-sitter CALLS/REFERENCES classification
+│   ├── db/            #   schema (single source of truth)
+│   ├── docs/          #   persona docs pipeline (synthesize → verify)
+│   ├── gate/          #   CI governance CLI
+│   ├── indexer/       #   fetch, sandbox, SCIP, worker
+│   ├── mcp/           #   MCP server for AI agents
+│   └── scip/          #   SCIP protobuf reader
+├── web/               # React + Sigma.js UI
+├── deploy/            # Dockerfiles
+├── tests/
+└── ARCHITECTURE.md    # full design, schema, decision log
+```
+
+## Roadmap
+
+- Section-level doc staleness: regenerate only what a commit's structural
+  diff touched, so docs never go stale and tokens scale with the change,
+  not the repo.
+- More languages (SCIP has indexers for Java, Go, Rust, and more).
+- `public_api_freeze` gate rule, egress-proxy deploy profile, GitHub
+  Action example.
+
+## Acknowledgements
+
+- [SCIP](https://github.com/sourcegraph/scip) and the Sourcegraph
+  indexers do the heavy lifting of symbol resolution.
+- [code-graph-rag](https://github.com/vitali87/code-graph-rag) (MIT)
+  informed several design decisions, and its test corpus inspired our
+  classifier fixtures.
+
+## License
+
+Proprietary. All rights reserved.

@@ -12,3 +12,4 @@ m0/.venv/
 m0/node_modules/
 m0/package*.json
 *.scip
+web/tsconfig.tsbuildinfo
