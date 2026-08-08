@@ -327,6 +327,14 @@ table.htable tbody tr:last-child td { border-bottom: none; }
   display: flex; align-items: center; gap: 10px; font-size: 14px;
 }
 
+/* computed plain-language reading of the focused node */
+.insight {
+  margin: 0; padding: 8px 14px; font-size: 13px;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 10px;
+  color: var(--text-secondary);
+}
+
 /* Documentation persona chooser */
 .persona-pick {
   max-width: 860px; margin: 6vh auto 0; text-align: center;
