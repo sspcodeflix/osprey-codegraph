@@ -155,7 +155,7 @@ def _facts(conn, snap: int, spec: PageSpec, repo: str) -> dict:
 
 def _source_slices(source_root: Path | None, facts: dict) -> str:
     if source_root is None:
-        return "(source unavailable — write from the graph facts only)"
+        return "(source unavailable: write from the graph facts only)"
     paths: list[str] = []
     for key in ("files", "public_symbols", "entry_points", "hotspots"):
         for row in facts.get(key, [])[:8]:
@@ -228,9 +228,10 @@ HARD RULES:
   separately.
 - Never mention the internal FACTS field names (totals, languages,
   module_dependencies, public_symbols, files, uses, used_by, entry_points,
-  hotspots) in your prose — they are data plumbing, not part of the
+  hotspots) in your prose: they are data plumbing, not part of the
   codebase. Cite only real file paths and symbols.
-- No preamble, no meta-commentary. Output markdown body only (no H1 —
+- Never use em-dashes. Use '-' or ':' instead.
+- No preamble, no meta-commentary. Output markdown body only (no H1;
   the title is added by the system)."""
 
 PERSONAS: dict[str, dict] = {
@@ -272,7 +273,7 @@ PERSONAS: dict[str, dict] = {
             "overview": "Operational overview: what this system does, its "
                 "major moving parts, and which parts are most load-bearing "
                 "(judge by dependency weight, not guesswork).",
-            "entries": "Where execution enters this codebase — routes, CLI "
+            "entries": "Where execution enters this codebase: routes, CLI "
                 "commands, main scripts. During an incident these are the "
                 "first places to look; say what each entry area serves.",
             "hot": "The most-depended-on functions: a failure or "
@@ -291,7 +292,7 @@ PERSONAS: dict[str, dict] = {
             "spend limited testing time. Focus on risk: what has the most "
             "dependents (regression risk), what surfaces users hit (entry "
             "points), and where integration seams are. You have NO "
-            "coverage data — never claim something is tested or untested; "
+            "coverage data - never claim something is tested or untested; "
             "reason only from structure.",
         "pages": ["overview", "hot", "entries", "architecture"],
         "briefs": {
@@ -299,7 +300,7 @@ PERSONAS: dict[str, dict] = {
                 "and where structural risk concentrates (judge by "
                 "dependency weight).",
             "hot": "Highest regression-risk functions: the most-called "
-                "code — a defect here surfaces everywhere. Prioritize "
+                "code - a defect here surfaces everywhere. Prioritize "
                 "these paths for regression tests; say what behavior to "
                 "pin for each.",
             "entries": "The user-facing surfaces (routes, CLI commands, "
@@ -311,6 +312,12 @@ PERSONAS: dict[str, dict] = {
         },
     },
 }
+
+
+def _no_em_dashes(md: str) -> str:
+    """House style bans em/en-dashes; enforce it even when the model
+    ignores the prompt rule."""
+    return md.replace(" — ", " - ").replace("—", " - ").replace("–", "-")
 
 
 def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
@@ -333,7 +340,7 @@ def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
     resp = provider.chat(messages, [])
     stats.prompt_tokens += resp.usage.get("prompt_tokens", 0)
     stats.completion_tokens += resp.usage.get("completion_tokens", 0)
-    body = resp.text.strip()
+    body = _no_em_dashes(resp.text.strip())
 
     ok, bad = _check_citations(conn, snap, body)
     if bad:
@@ -346,7 +353,7 @@ def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
              "Return the full corrected markdown body."}], [])
         stats.prompt_tokens += fix.usage.get("prompt_tokens", 0)
         stats.completion_tokens += fix.usage.get("completion_tokens", 0)
-        body = fix.text.strip() or body
+        body = _no_em_dashes(fix.text.strip()) or body
         ok, bad = _check_citations(conn, snap, body)
         if bad:
             body = _strip_bad_citations(body, bad)
@@ -355,7 +362,7 @@ def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
     diagram = _diagram(conn, snap, spec)
     if diagram:
         body += ("\n\n## How it connects\n\n*(diagram compiled from the "
-                 "dependency graph — not drawn by the model)*\n\n" + diagram)
+                 "dependency graph, not drawn by the model)*\n\n" + diagram)
     return body
 
 
@@ -427,7 +434,7 @@ def embed_pages(conn, snap: int, persona: str, stats: GenStats) -> None:
     embs = _embed_texts([c[1] for c in chunks])
     if embs is None:
         stats.notes.append("embeddings unavailable (ollama/nomic-embed-text"
-                           " not reachable) — doc search disabled")
+                           " not reachable) - doc search disabled")
         return
     conn.execute("DELETE FROM doc_chunks WHERE snapshot_id=%s"
                  " AND source LIKE %s", (snap, f"doc:{persona}/%"))

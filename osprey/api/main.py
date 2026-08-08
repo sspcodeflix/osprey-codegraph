@@ -140,7 +140,7 @@ def require_symbol(conn, snap: int, symbol_id: int) -> None:
         (snap, symbol_id)).fetchone()
     if row is None:
         raise HTTPException(
-            404, f"symbol {symbol_id} does not exist in snapshot {snap} — "
+            404, f"symbol {symbol_id} does not exist in snapshot {snap}: "
             "find valid symbol ids via symbol search first")
 
 
@@ -384,7 +384,7 @@ def deadcode(snap: int, limit: int = Query(200, le=1000), conn=Depends(db)):
         conn.rollback()
         raise HTTPException(
             503, "dead-code analysis exceeded the time budget for this "
-            "snapshot — try again shortly (statistics may still be "
+            "snapshot - try again shortly (statistics may still be "
             "settling)") from None
     return {"entry_points": n_entries, "candidates": rows,
             "count": len(rows)}

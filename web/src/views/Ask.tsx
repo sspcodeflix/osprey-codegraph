@@ -48,7 +48,7 @@ export function Ask({ snap, focusName }: {
   return (
     <div className="view">
       <p className="explain">Ask questions in plain English. The assistant
-        can only use Osprey's verified graph tools — every answer shows
+        can only use Osprey's verified graph tools - every answer shows
         which checks it ran, and runs entirely on this machine.</p>
       <div className="scroll chat">
         {messages.length === 0 && (
@@ -97,7 +97,7 @@ export function Ask({ snap, focusName }: {
           </div>
         ))}
         {busy && <div className="msg assistant">
-          <div className="bubble"><span className="spinner" /> thinking — running
+          <div className="bubble"><span className="spinner" /> thinking: running
             graph checks…</div></div>}
         {error && <div className="error">{error}</div>}
         <div ref={bottom} />

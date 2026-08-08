@@ -39,7 +39,7 @@ export function DiffView({ snapshots }: { snapshots: Snapshot[] }) {
 
   return (
     <div className="view">
-      <p className="explain">What changed between two versions — not lines of
+      <p className="explain">What changed between two versions: not lines of
         text, but <b>relationships</b>: which code started or stopped
         depending on which. Green = added, red = removed.</p>
       <div className="controls">

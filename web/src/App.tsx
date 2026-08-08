@@ -180,7 +180,7 @@ export default function App() {
         <aside className="sidenav">
           <h1>🦅 <span className="brand">Osprey</span></h1>
           <button className="sidesearch" onClick={() => setPaletteOpen(true)}
-                  title="Jump to any symbol, doc, or action — press / or ⌘K">
+                  title="Jump to any symbol, doc, or action: press / or ⌘K">
             <span>⌕ Search</span><kbd>/</kbd>
           </button>
           <nav className="sidenav-spaces">
@@ -260,7 +260,7 @@ export default function App() {
               {job.status === "failed"
                 ? <>❌ <b>{job.repo}</b>: {job.error ?? "indexing failed"}</>
                 : job.status === "done"
-                  ? <>✅ <b>{job.repo}</b> indexed — explore it above</>
+                  ? <>✅ <b>{job.repo}</b> indexed - explore it above</>
                   : <><span className="spinner" /> Indexing <b>{job.repo}</b>…
                       {" "}{job.snapshot_status === "indexing"
                         ? "analyzing code" : "fetching"}</>}
@@ -271,7 +271,7 @@ export default function App() {
               {docsJob.status === "writing"
                 ? <><span className="spinner" /> Writing{" "}
                     <b>{PERSONA_LABELS[docsJob.persona]}</b> docs for{" "}
-                    <b>{docsJob.repo}</b> — keeps going while you browse</>
+                    <b>{docsJob.repo}</b> - keeps going while you browse</>
                 : <>✅ <b>{PERSONA_LABELS[docsJob.persona]}</b> docs for{" "}
                     <b>{docsJob.repo}</b> are ready{" "}
                     <button className="linkish" onClick={() => {
@@ -292,7 +292,7 @@ export default function App() {
                     <h2>Understand any codebase in minutes</h2>
                     <p className="muted">Paste a repository URL and Osprey maps
                       its structure, finds the risks, and writes grounded
-                      documentation — every claim checked against the code.</p>
+                      documentation - every claim checked against the code.</p>
                     <button className="primary" onClick={() => setAdding(true)}>
                       ＋ Add repository</button>
                     <p className="muted small">or index a local checkout:{" "}

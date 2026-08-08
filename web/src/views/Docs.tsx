@@ -6,7 +6,7 @@ import { Mermaid } from "../Mermaid"
 
 export const PERSONAS = [
   ["onboarding", "Developer",
-   "Architecture, entry points, and how the pieces fit — for someone joining this codebase."],
+   "Architecture, entry points, and how the pieces fit - for someone joining this codebase."],
   ["sre", "SRE / On-call",
    "Where execution enters, what fails together, and the widest blast radii."],
   ["tester", "QA / Tester",
@@ -51,7 +51,7 @@ export function Docs({ snap, persona, generating, onPersona }: {
         {generating ? (
           <div className="hint">
             <p><span className="spinner" /> Writing{" "}
-              <b>{PERSONA_LABELS[persona]}</b> documentation — reading the
+              <b>{PERSONA_LABELS[persona]}</b> documentation: reading the
               graph, drafting sections, verifying every citation. This takes
               a few minutes, and it keeps going if you browse elsewhere.</p>
           </div>
@@ -59,7 +59,7 @@ export function Docs({ snap, persona, generating, onPersona }: {
           <div className="persona-pick">
             <h2>Who is this documentation for?</h2>
             <p className="muted">Osprey writes each audience its own pages
-              from the same code graph — diagrams compiled from real
+              from the same code graph: diagrams compiled from real
               dependencies, every <code>file:line</code> citation verified
               against the snapshot before publishing.</p>
             <div className="persona-cards">

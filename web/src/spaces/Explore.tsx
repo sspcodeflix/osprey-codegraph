@@ -22,8 +22,8 @@ export function Explore({ snap, lens }: { snap: number; lens: Lens }) {
 
   return (
     <div className="view" style={{ gap: 8 }}>
-      {!focus && <p className="explain">Select anything — a folder on the
-        map, a function via ⌘K — and every lens follows it.</p>}
+      {!focus && <p className="explain">Select anything - a folder on the
+        map, a function via ⌘K - and every lens follows it.</p>}
       {lens === "Map" && (
         <ModuleMap key={snap} snap={snap}
           focusModule={focus?.kind === "module" ? focus.module

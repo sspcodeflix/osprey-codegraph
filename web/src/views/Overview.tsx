@@ -147,7 +147,7 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
               <input className="tablesearch" placeholder="⌕ Filter symbols"
                      value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
-            <p className="muted">Changes here ripple widest — click one to see
+            <p className="muted">Changes here ripple widest: click one to see
               its blast radius.</p>
             <table className="htable">
               <thead>
@@ -241,7 +241,7 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
           <div className="card">
             <div className="card-head"><h3>Documentation</h3></div>
             <p className="muted">Persona-targeted docs written from this
-              snapshot's graph — every claim cite-checked against the code.</p>
+              snapshot's graph - every claim cite-checked against the code.</p>
             <div className="chips">
               <span className="kindchip">Developer</span>
               <span className="kindchip">SRE / On-call</span>

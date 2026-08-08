@@ -14,7 +14,7 @@ export function DeadCode({ snap }: { snap: number }) {
   return (
     <div className="view">
       <p className="explain">Code that nothing can reach from any of the
-        app's entry points (web routes, commands, main scripts) — likely safe
+        app's entry points (web routes, commands, main scripts) - likely safe
         to delete after a human look. We only list what we're confident
         about: anything analyzed approximately is excluded.</p>
       {data && (
@@ -27,7 +27,7 @@ export function DeadCode({ snap }: { snap: number }) {
         ? <div className="hint">
             <p>ℹ️ <b>Cleanup analysis doesn't apply here.</b></p>
             <p className="muted">No entry points (web routes, commands, main
-              scripts) were detected — this looks like a library, whose code
+              scripts) were detected - this looks like a library, whose code
               is called from outside. Reachability from entry points would
               wrongly flag everything.</p>
           </div>

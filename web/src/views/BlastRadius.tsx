@@ -85,7 +85,7 @@ export function BlastRadius({ snap, preset, onPick }: {
     <div className="view">
       <p className="explain">Pick a piece of code and see everything that
         would be affected if it changed. The orange dot is your pick; each
-        ring outward is one more step removed — inner rings break first.</p>
+        ring outward is one more step removed - inner rings break first.</p>
       <div className="controls searchbox">
         <input placeholder="Search a function, class, or method…" value={q}
                onChange={(e) => setQ(e.target.value)} style={{ width: 320 }} />

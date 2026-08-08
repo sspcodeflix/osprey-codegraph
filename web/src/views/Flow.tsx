@@ -97,7 +97,7 @@ export function Flow({ snap, preset, onPick }: {
         <div className="scroll" style={{ padding: 16 }}>
           {seq.steps.length === 0
             ? <div className="hint">The graph records no outgoing calls from
-                this function within {depth} hops — it may be a leaf, or its
+                this function within {depth} hops: it may be a leaf, or its
                 calls target external libraries.</div>
             : <>
                 <Mermaid code={seq.mermaid} />

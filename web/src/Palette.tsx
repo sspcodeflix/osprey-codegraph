@@ -94,7 +94,7 @@ export function Palette({ snap, open, onClose, actions, onOpenDoc }: {
         <div className="palette-list">
           {items.length === 0 && (
             <div className="hint">{q.length < 2
-              ? "Type to search the codebase — or pick an action below."
+              ? "Type to search the codebase, or pick an action below."
               : "Nothing matches."}</div>
           )}
           {items.map((it, i) => (
