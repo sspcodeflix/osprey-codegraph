@@ -23,7 +23,15 @@ export function DeadCode({ snap }: { snap: number }) {
           <span className="pill">{data.entry_points} entry points checked</span>
         </div>
       )}
-      {error && <div className="hint">{error}</div>}
+      {error && (error.includes("no entry points")
+        ? <div className="hint">
+            <p>ℹ️ <b>Cleanup analysis doesn't apply here.</b></p>
+            <p className="muted">No entry points (web routes, commands, main
+              scripts) were detected — this looks like a library, whose code
+              is called from outside. Reachability from entry points would
+              wrongly flag everything.</p>
+          </div>
+        : <div className="error">{error}</div>)}
       {data && (
         <div className="scroll">
           <table className="data">

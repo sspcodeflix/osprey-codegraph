@@ -491,6 +491,7 @@ def hotspots(snap: int, limit: int = Query(10, le=50), conn=Depends(db)):
         JOIN files f ON f.id = s.file_id
         WHERE e.snapshot_id = %s AND e.kind = 'CALLS' AND NOT s.is_external
           AND s.kind IN ('function','method')
+          AND s.name NOT IN ('<constructor>', '__init__', 'constructor')
         GROUP BY s.id, s.name, s.kind, f.path, s.start_line
         ORDER BY inbound DESC LIMIT %s
         """, (snap, limit)).fetchall()
@@ -529,6 +530,7 @@ def overview(snap: int, conn=Depends(db)):
         JOIN files f ON f.id = s.file_id
         WHERE e.snapshot_id = %s AND e.kind = 'CALLS' AND NOT s.is_external
           AND s.kind IN ('function','method')
+          AND s.name NOT IN ('<constructor>', '__init__', 'constructor')
         GROUP BY s.id, s.name, s.kind, f.path, s.start_line
         ORDER BY inbound DESC LIMIT 5
         """, (snap,)).fetchall()

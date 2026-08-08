@@ -212,6 +212,10 @@ HARD RULES:
   locations.
 - Do NOT draw diagrams or write mermaid; a verified diagram is inserted
   separately.
+- Never mention the internal FACTS field names (totals, languages,
+  module_dependencies, public_symbols, files, uses, used_by, entry_points,
+  hotspots) in your prose — they are data plumbing, not part of the
+  codebase. Cite only real file paths and symbols.
 - No preamble, no meta-commentary. Output markdown body only (no H1 —
   the title is added by the system)."""
 
