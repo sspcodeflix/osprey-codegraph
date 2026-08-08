@@ -180,10 +180,36 @@ export default function App() {
       <div className="shell">
         <aside className="sidenav">
           <h1>🦅 <span className="brand">Osprey</span></h1>
-          <button className="sidesearch" onClick={() => setPaletteOpen(true)}
-                  title="Jump to any symbol, doc, or action: press / or ⌘K">
-            <span><SearchIcon /> Search</span><kbd>/</kbd>
-          </button>
+          <div className="repo-block">
+            <label className="muted small">Repository</label>
+            <select value={repo} onChange={(e) => setRepo(e.target.value)}
+                    title="Which codebase to explore">
+              {repos.map((r) => (
+                <option key={r.name} value={r.name}>
+                  {r.name}{r.ref && r.ref !== "HEAD" ? ` · ${r.ref}` : ""}
+                </option>
+              ))}
+            </select>
+            {snapshots.length > 1 ? (
+              <select value={snap ?? ""}
+                      onChange={(e) => setSnap(Number(e.target.value))}
+                      title="Which analyzed version">
+                {snapshots.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.commit_sha.slice(0, 7)}
+                    {refOf(s) ? ` · ${refOf(s)}` : ""} · {fmtDate(s.created_at)}
+                  </option>
+                ))}
+              </select>
+            ) : snapshots[0] && (
+              <span className="muted small snapline"
+                    title="the analyzed version: commit and date">
+                {snapshots[0].commit_sha.slice(0, 7)}
+                {refOf(snapshots[0]) ? ` · ${refOf(snapshots[0])}` : ""} ·{" "}
+                {fmtDate(snapshots[0].created_at)}
+              </span>
+            )}
+          </div>
           <nav className="sidenav-spaces">
             {SPACES.map((s) => (
               <div key={s}>
@@ -206,23 +232,12 @@ export default function App() {
 
         <div className="shell-main">
           <header className="topbar">
-            <select value={repo} onChange={(e) => setRepo(e.target.value)}
-                    title="Which codebase to explore">
-              {repos.map((r) => (
-                <option key={r.name} value={r.name}>
-                  {r.name}{r.ref && r.ref !== "HEAD" ? ` · ${r.ref}` : ""}
-                </option>
-              ))}
-            </select>
-            <select value={snap ?? ""} onChange={(e) => setSnap(Number(e.target.value))}
-                    title="Which analyzed version">
-              {snapshots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.commit_sha.slice(0, 7)}
-                  {refOf(s) ? ` · ${refOf(s)}` : ""} · {fmtDate(s.created_at)}
-                </option>
-              ))}
-            </select>
+            <button className="sidesearch topsearch"
+                    onClick={() => setPaletteOpen(true)}
+                    title="Jump to any symbol, doc, or action: press / or ⌘K">
+              <span><SearchIcon /> Search symbols, docs, actions…</span>
+              <kbd>/</kbd>
+            </button>
             {focus && (
               <span className="pill focuspill" title={focus.path ?? focus.module}>
                 ◉ {focus.name}

@@ -313,6 +313,14 @@ table.htable tbody tr:last-child td { border-bottom: none; }
   font: 600 10.5px ui-monospace, monospace; background: var(--surface-1);
   border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
 }
+.topsearch { margin: 0; flex: 0 1 440px; min-width: 200px; }
+
+/* sidebar repo/version block (where search used to live) */
+.repo-block {
+  display: flex; flex-direction: column; gap: 6px; margin: 2px 12px 12px;
+}
+.repo-block select { width: 100%; }
+.repo-block .snapline { padding-left: 2px; }
 
 /* Overview drill-in header */
 .backbar {
