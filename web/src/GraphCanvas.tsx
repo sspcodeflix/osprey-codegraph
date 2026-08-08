@@ -25,6 +25,30 @@ export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
 
   useEffect(() => {
     if (!ref.current || !graph) return
+    // sigma's default hover drawer paints a WHITE pill behind the label —
+    // invisible with our white label text on the dark theme. Draw our own:
+    // dark pill, accent border, light text.
+    const drawNodeHover = (ctx: CanvasRenderingContext2D, data: {
+      x: number; y: number; size: number; label?: string | null
+    }, settings: { labelSize: number; labelFont?: string }) => {
+      const label = data.label
+      if (!label) return
+      const size = settings.labelSize
+      ctx.font = `600 ${size}px ${settings.labelFont ?? "system-ui"}`
+      const w = ctx.measureText(label).width + 14
+      const h = size + 10
+      const x = data.x + data.size + 4
+      const y = data.y - h / 2
+      ctx.beginPath()
+      ctx.roundRect(x, y, w, h, 6)
+      ctx.fillStyle = cssVar("--surface-2")
+      ctx.fill()
+      ctx.strokeStyle = cssVar("--accent")
+      ctx.lineWidth = 1
+      ctx.stroke()
+      ctx.fillStyle = cssVar("--text-primary")
+      ctx.fillText(label, x + 7, y + h / 2 + size / 3)
+    }
     const sigma = new Sigma(graph, ref.current, {
       labelColor: { color: cssVar("--text-primary") },
       labelSize: 12,
@@ -32,6 +56,7 @@ export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
       minCameraRatio: 0.05,
       maxCameraRatio: 8,
       allowInvalidContainer: true,
+      defaultDrawNodeHover: drawNodeHover,
     })
     sigma.on("clickNode", (e) => clickRef.current?.(e.node))
     sigma.on("doubleClickNode", (e) => {
