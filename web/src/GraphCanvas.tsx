@@ -1,3 +1,4 @@
+import { downloadAsPNG } from "@sigma/export-image"
 import Graph from "graphology"
 import Sigma from "sigma"
 import { MutableRefObject, useEffect, useRef } from "react"
@@ -67,23 +68,13 @@ export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
     sigma.on("clickStage", () => stageRef.current?.())
     if (apiRef) {
       apiRef.current = {
+        // manual canvas merging fails here: node/edge layers are WebGL,
+        // whose buffers read back blank after compositing. The plugin
+        // re-renders on an off-screen renderer built for capture.
         exportPng: (filename: string) => {
-          const canvases = Object.values(sigma.getCanvases())
-          if (!canvases.length) return
-          const out = document.createElement("canvas")
-          out.width = canvases[0].width
-          out.height = canvases[0].height
-          const ctx = out.getContext("2d")!
-          ctx.fillStyle = cssVar("--surface-1")
-          ctx.fillRect(0, 0, out.width, out.height)
-          for (const c of canvases) ctx.drawImage(c, 0, 0)
-          out.toBlob((blob) => {
-            if (!blob) return
-            const a = document.createElement("a")
-            a.href = URL.createObjectURL(blob)
-            a.download = filename
-            a.click()
-            URL.revokeObjectURL(a.href)
+          void downloadAsPNG(sigma, {
+            fileName: filename.replace(/\.png$/, ""),
+            backgroundColor: cssVar("--surface-1"),
           })
         },
       }
