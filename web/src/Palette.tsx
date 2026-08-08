@@ -53,10 +53,16 @@ export function Palette({ snap, open, onClose, actions, onOpenDoc }: {
       label: s.name,
       hint: `${s.kind} · ${s.path}:${s.line}`,
       run: () => {
-        setFocus({ kind: "symbol", id: s.id, name: s.name, path: s.path,
-                   line: s.line,
-                   module: s.path?.replace(/\/[^/]+$/, "") ?? "" },
-                 { explore: true })
+        const module = s.path?.replace(/\/[^/]+$/, "") ?? ""
+        // a module symbol (a file) has no callers/blast of its own: focus
+        // its folder on the map instead of a dead-end symbol focus
+        if (s.kind === "module" && s.path) {
+          setFocus({ kind: "module", name: s.name, path: s.path, module },
+                   { explore: true })
+        } else {
+          setFocus({ kind: "symbol", id: s.id, name: s.name, path: s.path,
+                     line: s.line, module }, { explore: true })
+        }
         onClose()
       },
     })),
