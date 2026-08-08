@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "osprey": {
+      "command": "/home/soumya/Documents/AI_Projects/osprey/.venv/bin/osprey-mcp",
+      "env": {
+        "OSPREY_API_URL": "http://127.0.0.1:8800"
+      }
+    }
+  }
+}

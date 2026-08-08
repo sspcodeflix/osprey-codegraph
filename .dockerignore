@@ -1,0 +1,10 @@
+.venv/
+.git/
+.env
+m0/
+web/node_modules/
+web/dist/
+**/__pycache__/
+tests/
+deploy/
+docs/

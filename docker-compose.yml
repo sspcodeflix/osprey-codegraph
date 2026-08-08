@@ -1,0 +1,99 @@
+# Osprey — single-node deployment (ARCHITECTURE.md §13).
+#
+#   docker compose up -d          # db + api + worker
+#   docker compose --profile local-chat up -d    # …plus bundled Ollama
+#
+# The UI/API serve on 127.0.0.1:8800. All ports bind loopback: nothing is
+# reachable from other hosts unless you change the mappings deliberately.
+# Chat provider config (e.g. OSPREY_CHAT_PROVIDER / OSPREY_DEEPSEEK_API_KEY)
+# is read from ./.env automatically.
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: osprey
+      POSTGRES_PASSWORD: osprey
+      POSTGRES_DB: osprey
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5434:5432"     # optional: psql access from the host
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osprey -d osprey"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/app.Dockerfile
+    image: osprey-app:0.1
+    command: sh -c "osprey db-init && exec osprey api --host 0.0.0.0 --port 8800"
+    env_file:
+      - path: .env
+        required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      OSPREY_DB_DSN: host=db port=5432 dbname=osprey user=osprey password=osprey
+      OSPREY_API_URL: http://127.0.0.1:8800
+      PYTHONUNBUFFERED: "1"
+      OSPREY_OLLAMA_URL: http://host.docker.internal:11434
+    ports:
+      - "127.0.0.1:8800:8800"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: osprey-app:0.1
+    command: sh -c "osprey db-init && exec osprey worker --repo-root /repos"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OSPREY_DB_DSN: host=db port=5432 dbname=osprey user=osprey password=osprey
+      # in compose mode the worker container IS the sandbox boundary: the
+      # per-stage docker sandbox needs host docker access, which we do not
+      # grant. Package scripts stay disabled either way (npm
+      # --ignore-scripts, pip --only-binary), and the container below is
+      # capability-stripped and resource-capped.
+      PYTHONUNBUFFERED: "1"
+      OSPREY_EXECUTOR: local
+      OSPREY_REMOTE_FORCE_CONTAINER: "false"
+      OSPREY_OLLAMA_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # local checkouts to index by name (osprey enqueue <name>); pasted
+      # URLs need no mounts
+      - ./m0:/repos
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    pids_limit: 512
+    mem_limit: 8g
+    cpus: 8
+    restart: unless-stopped
+
+  # optional bundled local chat model: docker compose --profile local-chat
+  # (or point OSPREY_OLLAMA_URL at an Ollama already running on the host)
+  ollama:
+    profiles: [local-chat]
+    image: ollama/ollama
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "127.0.0.1:11435:11434"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  ollama:
