@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { api, Hotspot, Overview as Ov } from "../api"
 
 // categorical hues for the language bar — fixed order, dark-validated
-// (dataviz six-checks vs #141417); >3 languages fold into a neutral "other"
+// (dataviz six-checks vs #1a2038); >3 languages fold into a neutral "other"
 const LANG_COLORS = ["var(--series-1)", "var(--series-3)", "var(--series-7)"]
 const OTHER_COLOR = "var(--text-muted)"
 

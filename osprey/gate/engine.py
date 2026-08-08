@@ -57,7 +57,7 @@ def _check_deny(rules: Rules, edges: list[ModuleEdge],
                 for s in fetch_sites(src, dst):
                     loc = f"{s['path']}:{s['line']}" if s.get("path") else "?"
                     evidence.append(
-                        f"{s['src_name']} —{s['kind']}→ {s['dst_name']}  ({loc})")
+                        f"{s['src_name']} -{s['kind']}-> {s['dst_name']}  ({loc})")
             out.append(Violation(
                 rule=f"deny: {rule.src_layer} -> {rule.dst_layer}",
                 severity=rule.severity,
@@ -107,7 +107,7 @@ def render_text(violations: list[Violation], base_label: str,
 
 def render_markdown(violations: list[Violation], base_label: str,
                     head_label: str) -> str:
-    lines = [f"### osprey-gate — `{head_label}` vs `{base_label}`", ""]
+    lines = [f"### osprey-gate: `{head_label}` vs `{base_label}`", ""]
     if not violations:
         lines.append("✅ **No architecture violations.**")
         return "\n".join(lines)
@@ -117,7 +117,7 @@ def render_markdown(violations: list[Violation], base_label: str,
     lines.append("")
     for v in violations:
         icon = "❌" if v.severity == "error" else "⚠️"
-        lines.append(f"- {icon} **{v.rule}** — {v.message}")
+        lines.append(f"- {icon} **{v.rule}**: {v.message}")
         for ev in v.evidence[:5]:
             lines.append(f"  - `{ev}`")
     return "\n".join(lines)

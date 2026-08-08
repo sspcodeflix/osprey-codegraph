@@ -1,30 +1,33 @@
-/* Osprey theme — modern red & black, committed dark design.
-   Chrome (nav, accents, focus) carries the brand red; data-viz series keep
-   hue diversity (values from the validated dark dataviz palette) so edge
-   kinds stay distinguishable. Magnitude ramps (DSM, blast rings) use a red
-   sequential family — one hue, light→dark, on-brand and CVD-safe. */
+/* Osprey theme: deep navy surfaces with a purple chrome accent (Velzon
+   direction), committed dark design. Chrome (nav, focus, buttons) is
+   purple; data semantics keep their own colors: red = risk/heat (hotspot
+   bars, warnings, "uses" arrows, DSM/blast ramps), blue/green/violet =
+   edge kinds (validated on the navy surface with the dataviz six-checks). */
 :root {
   color-scheme: dark;
-  --surface-0: #0b0b0d;      /* page */
-  --surface-1: #141417;      /* panels */
-  --surface-2: #1d1d22;      /* insets, hover, bubbles */
-  --text-primary: #f5f5f4;
-  --text-secondary: #a7a7ae;
-  --text-muted: #6f6f78;
-  --border: #262629;
-  --accent: #e5484d;         /* brand red */
-  --accent-hover: #ff5d61;
-  --accent-dim: rgba(229, 72, 77, 0.14);
-  /* categorical series (dark-validated): edge kinds must stay distinct */
+  --surface-0: #12162b;      /* page */
+  --surface-1: #1a2038;      /* panels */
+  --surface-2: #242b4a;      /* insets, hover, bubbles */
+  --text-primary: #eef0fb;
+  --text-secondary: #a3aacb;
+  --text-muted: #737a9e;
+  --border: #2c3254;
+  --accent: #7269ef;         /* chrome purple */
+  --accent-hover: #8f88ff;
+  --accent-dim: rgba(114, 105, 239, 0.16);
+  --danger: #f0555a;         /* risk red: findings, deltas-gone-bad */
+  --danger-hover: #ff8589;
+  --danger-dim: rgba(240, 85, 90, 0.15);
+  /* categorical series (validated on #1a2038): edge kinds stay distinct */
   --series-1: #3987e5;       /* CALLS */
-  --series-2: #e5484d;       /* selection / root — the brand red */
+  --series-2: #f0555a;       /* selection / root / heat — the risk red */
   --series-3: #199e70;       /* IMPORTS */
   --series-7: #9085e9;       /* INHERITS */
-  --external: #45454d;
-  /* sequential red ramp (magnitude on dark: dim -> vivid) */
-  --seq-1: #2a1113; --seq-2: #471a1d; --seq-3: #6d2227;
-  --seq-4: #992b30; --seq-5: #c43a3f; --seq-6: #e5484d;
-  --removed: #e5484d;        /* status: serious */
+  --external: #4a5170;
+  /* sequential red ramp (magnitude on navy: dim -> vivid) */
+  --seq-1: #2c1a2e; --seq-2: #492034; --seq-3: #6d283a;
+  --seq-4: #983141; --seq-5: #c4414a; --seq-6: #f0555a;
+  --removed: #f0555a;        /* status: serious */
   --added: #46a758;          /* status: good */
 }
 
@@ -91,8 +94,8 @@ header.topbar {
   font-size: 17px; margin: 0 10px 0 0; letter-spacing: 0.02em;
   font-weight: 700;
 }
-.topbar h1 .brand {
-  background: linear-gradient(100deg, #ff6b6f, var(--accent) 60%, #b91c1c);
+.brand {
+  background: linear-gradient(100deg, #a29bff, var(--accent) 60%, #4f46b8);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .topbar select, .searchbox input, select, input {
@@ -163,7 +166,7 @@ table.dsm td {
   background: var(--surface-1); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px 20px;
 }
-.card.finding { border-left: 3px solid var(--accent); }
+.card.finding { border-left: 3px solid var(--danger); }
 .card h2 { margin: 0 0 6px; font-size: 15px; }
 .card p { margin: 4px 0; }
 .overview { gap: 14px; max-width: 1240px; }
@@ -208,7 +211,7 @@ table.dsm td {
   padding: 2px 8px; white-space: nowrap;
 }
 .delta.good { color: #34d399; background: rgba(25, 158, 112, 0.15); }
-.delta.bad { color: #ff8589; background: var(--accent-dim); }
+.delta.bad { color: var(--danger-hover); background: var(--danger-dim); }
 .delta.flat { color: var(--text-secondary); background: var(--surface-2); }
 .hilist {
   display: flex; flex-direction: column; margin-top: 12px;
@@ -404,7 +407,7 @@ button.primary:hover { background: var(--accent-hover); }
   background: var(--surface-2); border: 1px solid var(--border);
 }
 .msg.user .bubble {
-  background: var(--accent-dim); border-color: rgba(229, 72, 77, 0.4);
+  background: var(--accent-dim); border-color: rgba(114, 105, 239, 0.4);
   white-space: pre-wrap;
 }
 .msg.assistant .bubble { white-space: normal; }
@@ -454,8 +457,8 @@ button.primary:hover { background: var(--accent-hover); }
 .md li { margin: 3px 0; }
 .md code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em;
-  background: rgba(229, 72, 77, 0.08); border: 1px solid #322024;
-  border-radius: 5px; padding: 0.5px 5px; color: #ffb3b5;
+  background: rgba(114, 105, 239, 0.10); border: 1px solid #333a63;
+  border-radius: 5px; padding: 0.5px 5px; color: #beb8ff;
 }
 .md pre {
   background: var(--surface-0); border: 1px solid var(--border);
@@ -480,7 +483,7 @@ nav.tabs.spaces button { font-size: 14.5px; padding: 8px 16px; }
 .lenses button.active { background: var(--accent-dim); color: var(--text-primary);
   font-weight: 600; }
 .focuspill { border-color: var(--accent); color: var(--text-primary); }
-.pill.dir-out { color: var(--accent-hover); border-color: rgba(229,72,77,0.5); }
+.pill.dir-out { color: var(--danger-hover); border-color: rgba(240,85,90,0.5); }
 .pill.dir-in { color: var(--series-1); border-color: rgba(57,135,229,0.5); }
 
 main.with-drawer { flex-direction: row; }
@@ -502,7 +505,7 @@ main.with-drawer { flex-direction: row; }
   padding-top: 12vh; z-index: 50; backdrop-filter: blur(2px); }
 .palette { width: 620px; max-width: 92vw; background: var(--surface-1);
   border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(229,72,77,0.15); }
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(114,105,239,0.18); }
 .palette input { width: 100%; border: none; border-bottom: 1px solid var(--border);
   border-radius: 0; padding: 14px 16px; font-size: 15px; background: none; }
 .palette input:focus { border-color: var(--accent); }

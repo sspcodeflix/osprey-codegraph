@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> None:
         if args.fail_closed:
             print(f"osprey-gate: API unreachable ({exc})", file=sys.stderr)
             raise SystemExit(2) from exc
-        print(f"osprey-gate: WARNING — API unreachable, passing open "
+        print(f"osprey-gate: WARNING: API unreachable, passing open "
               f"({exc})", file=sys.stderr)
         raise SystemExit(0) from exc
 

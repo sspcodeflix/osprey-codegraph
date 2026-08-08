@@ -76,13 +76,13 @@ TOOL_DEFS = [
         "Folder-level circular dependencies (architecture erosion signal).",
         {}, []),
     _fn("dead_code",
-        "Code unreachable from any entry point — deletion candidates.",
+        "Code unreachable from any entry point: deletion candidates.",
         {}, []),
     _fn("hotspots",
-        "Most-called functions — where changes ripple widest.",
+        "Most-called functions: where changes ripple widest.",
         {}, []),
     _fn("list_entry_points",
-        "List detected entry points — HTTP route handlers, CLI commands, "
+        "List detected entry points: HTTP route handlers, CLI commands, "
         "main guards. Use this for questions about endpoints/routes/APIs "
         "and how they're registered.",
         {}, []),
@@ -140,7 +140,7 @@ def make_tools(snap: int):
         rows = _get(f"/v1/snapshots/{snap}/endpoints")
         if not rows:
             return {"entry_points": [], "note": "no HTTP routes, CLI "
-                    "commands, or main guards were detected — this may be a "
+                    "commands, or main guards were detected - this may be a "
                     "library, or use a framework Osprey doesn't yet detect"}
         return [{"name": r["name"], "type": r["entry_kind"],
                  "location": f"{r['path']}:{r['line']}"} for r in rows[:60]]
@@ -169,7 +169,7 @@ return verified facts from a compiler-grade dependency graph.
 Rules:
 - Ground every claim in a tool result; if you haven't looked, look.
 - Cite locations (path:line) from tool results next to each claim.
-- symbol_id values come ONLY from search_symbols or hotspots results —
+- symbol_id values come ONLY from search_symbols or hotspots results;
   never invent one. Always search before get_callers/blast_radius.
 - Plain language, short answers. Say "the graph doesn't show that" rather
   than guessing. Never invent symbols, numbers, or locations."""
@@ -230,5 +230,8 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
         final = provider.chat(messages, [])
         text = final.text or text
 
-    return {"answer": text or "I couldn't find enough in the graph to answer "
-            "that — try naming a specific function or file.", "trace": trace}
+    answer = text or ("I couldn't find enough in the graph to answer "
+                      "that - try naming a specific function or file.")
+    # house style: no em-dashes in anything shown to the user
+    answer = answer.replace(" — ", " - ").replace("—", " - ").replace("–", "-")
+    return {"answer": answer, "trace": trace}
