@@ -2,10 +2,18 @@ import { useEffect, useState } from "react"
 import { api, Hotspot, Sequence, Symbol as Sym } from "../api"
 import { Mermaid } from "../Mermaid"
 
-export function Flow({ snap }: { snap: number }) {
+export function Flow({ snap, preset, onPick }: {
+  snap: number
+  preset?: { id: number; name: string; path: string | null;
+             line: number | null } | null
+  onPick?: (s: Sym) => void
+}) {
   const [q, setQ] = useState("")
   const [results, setResults] = useState<Sym[]>([])
-  const [target, setTarget] = useState<Sym | null>(null)
+  const [target, setTarget] = useState<Sym | null>(
+    preset ? { id: preset.id, name: preset.name, kind: "function",
+               path: preset.path, line: preset.line, is_external: false }
+    : null)
   const [starters, setStarters] = useState<Hotspot[]>([])
   const [depth, setDepth] = useState(3)
   const [seq, setSeq] = useState<Sequence | null>(null)
@@ -33,8 +41,12 @@ export function Flow({ snap }: { snap: number }) {
       .catch((e) => { setSeq(null); setError(String(e)) })
   }, [target, depth, snap])
 
-  const pick = (id: number, name: string, path: string, line: number | null) =>
-    setTarget({ id, name, kind: "function", path, line, is_external: false })
+  const pick = (id: number, name: string, path: string, line: number | null) => {
+    const s: Sym = { id, name, kind: "function", path, line,
+                     is_external: false }
+    setTarget(s)
+    onPick?.(s)
+  }
 
   return (
     <div className="view">

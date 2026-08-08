@@ -3,9 +3,10 @@ import { useEffect, useState } from "react"
 import { api, cssVar, EDGE_KIND_VAR, Hotspot, Symbol as Sym } from "../api"
 import { GraphCanvas } from "../GraphCanvas"
 
-export function BlastRadius({ snap, preset }: {
+export function BlastRadius({ snap, preset, onPick }: {
   snap: number
   preset?: Hotspot | null
+  onPick?: (s: Sym) => void
 }) {
   const [q, setQ] = useState("")
   const [results, setResults] = useState<Sym[]>([])
@@ -100,7 +101,7 @@ export function BlastRadius({ snap, preset }: {
           <table className="data"><tbody>
             {results.map((r) => (
               <tr key={r.id} style={{ cursor: "pointer" }}
-                  onClick={() => { setTarget(r); setResults([]) }}>
+                  onClick={() => { setTarget(r); setResults([]); onPick?.(r) }}>
                 <td>{r.name}</td>
                 <td className="muted">{r.kind}</td>
                 <td className="muted">{r.path}:{r.line}</td>
@@ -120,9 +121,13 @@ export function BlastRadius({ snap, preset }: {
               {starters.map((h) => (
                 <button key={h.symbol_id} className="chip"
                         title={`${h.path}:${h.line}`}
-                        onClick={() => setTarget({
-                          id: h.symbol_id, name: h.name, kind: h.kind,
-                          path: h.path, line: h.line, is_external: false })}>
+                        onClick={() => {
+                          const s = { id: h.symbol_id, name: h.name,
+                            kind: h.kind, path: h.path, line: h.line,
+                            is_external: false }
+                          setTarget(s)
+                          onPick?.(s)
+                        }}>
                   {h.name} <span className="muted">· {h.inbound} callers</span>
                 </button>
               ))}

@@ -15,7 +15,10 @@ const SUGGESTIONS = [
   "What code could we probably delete?",
 ]
 
-export function Ask({ snap }: { snap: number }) {
+export function Ask({ snap, focusName }: {
+  snap: number
+  focusName?: string | null
+}) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
@@ -52,6 +55,12 @@ export function Ask({ snap }: { snap: number }) {
           <div className="hint">
             <p>Try one of these:</p>
             <div className="chips" style={{ justifyContent: "center" }}>
+              {focusName && (
+                <button className="chip"
+                        onClick={() => send(`What breaks if we change ${focusName}?`)}>
+                  What breaks if we change {focusName}?
+                </button>
+              )}
               {SUGGESTIONS.map((s) => (
                 <button key={s} className="chip" onClick={() => send(s)}>{s}</button>
               ))}
