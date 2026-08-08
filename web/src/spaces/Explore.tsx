@@ -31,12 +31,6 @@ export function Explore({ snap }: { snap: number }) {
                     onClick={() => setLens(l)}>{l}</button>
           ))}
         </nav>
-        {focus && (
-          <span className="pill focuspill" title={focus.path ?? focus.module}>
-            ◉ {focus.name}
-            <button className="linkish" onClick={() => setFocus(null)}>✕</button>
-          </span>
-        )}
         {!focus && <span className="muted">Select anything — a folder on the
           map, a function via ⌘K — and every lens follows it.</span>}
       </div>

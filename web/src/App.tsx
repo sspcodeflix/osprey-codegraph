@@ -50,9 +50,12 @@ export default function App() {
       const ready = ss.filter((s) => s.status === "ready")
       setSnapshots(ready)
       setSnap(ready[0]?.id ?? null)
-      setFocusState(null)
     }).catch((e) => setError(String(e)))
   }, [repo])
+
+  // a focus is snapshot-specific (symbol ids don't transfer); clear it
+  // whenever the viewed version changes
+  useEffect(() => { setFocusState(null) }, [snap])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -118,6 +121,13 @@ export default function App() {
         </select>
         <button className="chip" onClick={() => setAdding(!adding)}
                 title="Index a public repository by URL">＋ Add repo</button>
+        {focus && (
+          <span className="pill focuspill" title={focus.path ?? focus.module}>
+            ◉ {focus.name}
+            <button className="linkish" onClick={() => setFocus(null)}
+                    title="clear selection">✕</button>
+          </span>
+        )}
         <nav className="tabs spaces">
           {SPACES.map((s) => (
             <button key={s} className={s === space ? "active" : ""}
@@ -182,7 +192,9 @@ export default function App() {
           <aside className="ask-drawer">
             <div className="drawer-head">
               <b>✦ Ask</b>
-              {focus && <span className="pill">◉ {focus.name}</span>}
+              {focus && <span className="pill">◉ {focus.name}
+                <button className="linkish" onClick={() => setFocus(null)}
+                        title="clear selection">✕</button></span>}
               <button className="linkish" style={{ marginLeft: "auto" }}
                       onClick={() => setAskOpen(false)}>✕</button>
             </div>
