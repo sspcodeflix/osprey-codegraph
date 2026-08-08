@@ -1,0 +1,13 @@
+# Demo-instance overlay: browsing behind an access code, direct indexing
+# and doc generation disabled, visitors file repo requests instead.
+#
+#   OSPREY_DEMO_ACCESS_CODE=<code> docker compose \
+#     -f docker-compose.yml -f deploy/compose.demo.yml up -d
+#
+# Review requests with:  docker compose exec api osprey requests
+services:
+  api:
+    environment:
+      OSPREY_DEMO_MODE: "true"
+      OSPREY_API_TOKEN: ${OSPREY_DEMO_ACCESS_CODE:?set OSPREY_DEMO_ACCESS_CODE}
+      OSPREY_USER_LABEL: ${OSPREY_DEMO_USER_LABEL:-Guest}

@@ -179,6 +179,18 @@ CREATE INDEX IF NOT EXISTS idx_doc_chunks_snap ON doc_chunks (snapshot_id);
 CREATE INDEX IF NOT EXISTS idx_doc_chunks_embedding ON doc_chunks
   USING hnsw (embedding vector_cosine_ops);
 
+-- demo mode: visitors request indexing; the operator fulfills manually
+CREATE TABLE IF NOT EXISTS repo_requests (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  git_url    TEXT NOT NULL,
+  ref        TEXT NOT NULL DEFAULT 'HEAD',
+  contact    TEXT NOT NULL,
+  note       TEXT NOT NULL DEFAULT '',
+  status     TEXT NOT NULL DEFAULT 'pending' CHECK (status IN
+               ('pending','indexed','declined')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- additive migrations for existing databases
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'index';
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS payload JSONB NOT NULL DEFAULT '{}';

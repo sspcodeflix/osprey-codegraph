@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RepoOut(BaseModel):
@@ -221,6 +221,19 @@ class DocPageOut(BaseModel):
 class MeOut(BaseModel):
     user: str
     auth: str
+    demo: bool = False
+
+
+class RepoRequestIn(BaseModel):
+    git_url: str = Field(max_length=500)
+    ref: str | None = Field(default=None, max_length=120)
+    contact: str = Field(min_length=3, max_length=200)
+    note: str = Field(default="", max_length=1000)
+
+
+class RepoRequestOut(BaseModel):
+    id: int
+    status: str
 
 
 class DocsGenerateIn(BaseModel):

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { api, JobStatus, Repo, Snapshot } from "./api"
+import { api, JobStatus, Repo, setToken, Snapshot, Unauthorized } from "./api"
 import { Focus, FocusContext } from "./focus"
 import { Palette } from "./Palette"
 import { DocsIcon, ExploreIcon, OverviewIcon, PlusIcon, SearchIcon } from "./icons"
@@ -36,7 +36,14 @@ export default function App() {
     useState<{ snap: number; persona: string; repo: string
                status: "writing" | "done" } | null>(null)
   const [focus, setFocusState] = useState<Focus | null>(null)
-  const [user, setUser] = useState<{ user: string; auth: string } | null>(null)
+  const [user, setUser] = useState<{ user: string; auth: string
+                                     demo?: boolean } | null>(null)
+  const [needsLogin, setNeedsLogin] = useState(false)
+  const [code, setCode] = useState("")
+  const [loginErr, setLoginErr] = useState("")
+  const [contact, setContact] = useState("")
+  const [reqNote, setReqNote] = useState("")
+  const [reqMsg, setReqMsg] = useState("")
   const [askOpen, setAskOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [error, setError] = useState("")
@@ -57,9 +64,26 @@ export default function App() {
       setRepos(rs)
       const first = rs.find((r) => r.latest_snapshot != null)
       if (first) setRepo(first.name)
-    }).catch((e) => setError(String(e)))
+    }).catch((e) => {
+      if (e instanceof Unauthorized) setNeedsLogin(true)
+      else setError(String(e))
+    })
     api.me().then(setUser).catch(() => setUser(null))
   }, [])
+
+  const tryLogin = async () => {
+    const t = code.trim()
+    if (!t) return
+    // /v1/repos enforces the token; /v1/me deliberately does not
+    const res = await fetch("/v1/repos",
+      { headers: { Authorization: `Bearer ${t}` } }).catch(() => null)
+    if (res?.ok) {
+      setToken(t)
+      window.location.reload()
+    } else {
+      setLoginErr("that code didn't work: check for typos, or request access")
+    }
+  }
 
   useEffect(() => {
     if (!repo) return
@@ -103,7 +127,8 @@ export default function App() {
   const selectDocsPersona = (p: string, snapId = snap) => {
     setDocsPersona(p)
     setSpace("Documentation")
-    if (snapId == null) return
+    // demo instances never trigger generation: the operator does
+    if (snapId == null || user?.demo) return
     api.docsTree(snapId, p).then((t) => {
       if (t.length > 0) return   // already written — just open them
       return api.docsGenerate(snapId, p).then(() => {
@@ -180,6 +205,39 @@ export default function App() {
     const i = snapshots.findIndex((s) => s.id === snap)
     return i >= 0 ? snapshots[i + 1]?.id ?? null : null
   })()
+
+  const submitRequest = async () => {
+    try {
+      await api.requestRepo(addUrl.trim(), addRef.trim(), contact.trim(),
+                            reqNote.trim())
+      setAdding(false)
+      setAddUrl("")
+      setAddRef("")
+      setReqNote("")
+      setReqMsg("Request received. We index requests by hand on this demo "
+        + "(that's the white-glove part) and will get back to you at the "
+        + "contact you left.")
+    } catch (e) {
+      setError(String(e))
+    }
+  }
+
+  if (needsLogin) {
+    return (
+      <div className="cta-card">
+        <div className="cta-icon">🦅</div>
+        <h2><span className="brand">Osprey</span> demo</h2>
+        <p className="muted">Enter your access code to explore. Don't have
+          one yet? Request access and we'll send you an invite.</p>
+        <input type="password" placeholder="access code" value={code}
+               autoFocus onChange={(e) => setCode(e.target.value)}
+               onKeyDown={(e) => e.key === "Enter" && tryLogin()}
+               style={{ width: 260, textAlign: "center" }} />
+        <button className="primary" onClick={tryLogin}>Enter</button>
+        {loginErr && <div className="error">{loginErr}</div>}
+      </div>
+    )
+  }
 
   return (
     <FocusContext.Provider value={{ focus, setFocus }}>
@@ -262,7 +320,27 @@ export default function App() {
               </span>
             )}
           </header>
-          {adding && (
+          {adding && (user?.demo ? (
+            <div className="addbar">
+              <input autoFocus placeholder="https://github.com/owner/repo"
+                     value={addUrl} onChange={(e) => setAddUrl(e.target.value)}
+                     style={{ width: 320 }} />
+              <input placeholder="tag / branch (optional)"
+                     value={addRef} onChange={(e) => setAddRef(e.target.value)}
+                     style={{ width: 140 }} />
+              <input placeholder="your email or LinkedIn"
+                     value={contact} onChange={(e) => setContact(e.target.value)}
+                     style={{ width: 220 }} />
+              <input placeholder="anything we should know? (optional)"
+                     value={reqNote} onChange={(e) => setReqNote(e.target.value)}
+                     style={{ width: 240 }} />
+              <button className="chip" onClick={submitRequest}
+                      disabled={!addUrl.trim() || contact.trim().length < 3}>
+                Request indexing</button>
+              <span className="muted">Public repos up to 500 MB. We index
+                requests manually and let you know when yours is ready.</span>
+            </div>
+          ) : (
             <div className="addbar">
               <input autoFocus placeholder="https://github.com/owner/repo"
                      value={addUrl} onChange={(e) => setAddUrl(e.target.value)}
@@ -275,6 +353,12 @@ export default function App() {
               <button className="chip" onClick={submitAdd}>Index it</button>
               <span className="muted">Tag and branch URLs work directly.
                 Analyzed sandboxed (no scripts). Public repos up to 500 MB.</span>
+            </div>
+          ))}
+          {reqMsg && (
+            <div className="jobcard done">✅ {reqMsg}
+              <button className="linkish" style={{ marginLeft: "auto" }}
+                      onClick={() => setReqMsg("")}>✕</button>
             </div>
           )}
           {job && (
@@ -331,7 +415,7 @@ export default function App() {
                     {space === "Explore" && <Explore snap={snap} lens={exploreLens} />}
                     {space === "Documentation" && (
                       <Docs key={`${snap}:${docsPersona}`} snap={snap}
-                        persona={docsPersona}
+                        persona={docsPersona} demo={!!user?.demo}
                         generating={docsJob?.status === "writing"
                           && docsJob.snap === snap
                           && docsJob.persona === docsPersona}

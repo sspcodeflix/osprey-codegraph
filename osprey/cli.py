@@ -39,6 +39,15 @@ def main(argv: list[str] | None = None) -> None:
     p_gc.add_argument("--keep", type=int, default=None)
     p_gc.add_argument("--dry-run", action="store_true")
 
+    p_req = sub.add_parser("requests",
+                           help="list / resolve demo repo requests")
+    p_req.add_argument("--all", action="store_true",
+                       help="include resolved requests")
+    p_req.add_argument("--mark", type=int, metavar="ID",
+                       help="request id to resolve")
+    p_req.add_argument("--status", choices=["indexed", "declined"],
+                       help="resolution for --mark")
+
     args = ap.parse_args(argv)
 
     if args.cmd == "db-init":
@@ -79,6 +88,29 @@ def main(argv: list[str] | None = None) -> None:
             print(f"{verb} snapshot {sid} ({repo}@{sha[:8]}, {status}, "
                   f"age {age})")
         print(f"{verb}: {len(victims)} snapshot(s)")
+    elif args.cmd == "requests":
+        from osprey.db import connect
+        with connect(autocommit=True) as conn:
+            if args.mark is not None:
+                if not args.status:
+                    ap.error("--mark requires --status")
+                n = conn.execute(
+                    "UPDATE repo_requests SET status=%s WHERE id=%s",
+                    (args.status, args.mark)).rowcount
+                print(f"request {args.mark}: "
+                      + (args.status if n else "not found"))
+            else:
+                where = "" if args.all else " WHERE status='pending'"
+                rows = conn.execute(
+                    "SELECT id, status, git_url, ref, contact, note, "
+                    "created_at FROM repo_requests" + where
+                    + " ORDER BY id").fetchall()
+                for r in rows:
+                    rid, status, url, ref, contact, note, at = r
+                    print(f"#{rid} [{status}] {url}@{ref}  <{contact}>  "
+                          f"{at:%Y-%m-%d %H:%M}"
+                          + (f"\n    note: {note}" if note else ""))
+                print(f"{len(rows)} request(s)")
 
 
 if __name__ == "__main__":

@@ -29,8 +29,21 @@ export interface Diff {
 export interface DeadCandidate { name: string; kind: string; path: string; line: number | null }
 export interface Deadcode { entry_points: number; candidates: DeadCandidate[]; count: number }
 
+const TOKEN_KEY = "osprey_token"
+export const getToken = () => localStorage.getItem(TOKEN_KEY)
+export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t)
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+
+const authHeaders = (): Record<string, string> => {
+  const t = getToken()
+  return t ? { Authorization: `Bearer ${t}` } : {}
+}
+
+export class Unauthorized extends Error {}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(path)
+  const res = await fetch(path, { headers: authHeaders() })
+  if (res.status === 401) throw new Unauthorized("access code required")
   if (!res.ok) throw new Error(`${res.status}: ${(await res.json().catch(() => ({})) as { detail?: string }).detail ?? res.statusText}`)
   return res.json() as Promise<T>
 }
@@ -38,9 +51,10 @@ async function get<T>(path: string): Promise<T> {
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   })
+  if (res.status === 401) throw new Unauthorized("access code required")
   if (!res.ok) throw new Error(`${(await res.json().catch(() => ({})) as { detail?: string }).detail ?? res.statusText}`)
   return res.json() as Promise<T>
 }
@@ -70,9 +84,12 @@ export const api = {
   overview: (snap: number) => get<Overview>(`/v1/snapshots/${snap}/overview`),
   cycles: (snap: number) => get<{ count: number; cycles: string[][] }>(`/v1/snapshots/${snap}/modules/cycles`),
   hotspots: (snap: number) => get<Hotspot[]>(`/v1/snapshots/${snap}/hotspots?limit=10`),
-  me: () => get<{ user: string; auth: string }>("/v1/me"),
+  me: () => get<{ user: string; auth: string; demo: boolean }>("/v1/me"),
   indexRepo: (git_url: string, ref?: string) =>
     post<IndexJob>("/v1/repos/index", { git_url, ref: ref || null }),
+  requestRepo: (git_url: string, ref: string, contact: string, note: string) =>
+    post<{ id: number; status: string }>("/v1/repo-requests",
+      { git_url, ref: ref || null, contact, note }),
   ask: (snap: number, question: string, history: { role: string; content: string }[]) =>
     post<AskResponse>("/v1/ask", { snapshot_id: snap, question, history }),
   sequence: (snap: number, symbolId: number, depth: number) =>

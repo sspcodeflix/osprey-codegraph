@@ -9,6 +9,9 @@ class Settings(BaseSettings):
                    "user=osprey password=osprey")
     # API auth: empty token = dev mode (no auth); set in any real deployment
     api_token: str = ""
+    # demo instance: browsing is read-only, direct indexing and doc
+    # generation are disabled; visitors file repo requests instead
+    demo_mode: bool = False
     # where the built web UI lives; empty = repo-relative default (dev).
     # container images set this explicitly (the package is installed to
     # site-packages there, so repo-relative resolution has no meaning)
