@@ -118,6 +118,12 @@ def run_worker(repo_root: Path, once: bool = False) -> None:
                 else:
                     snapshot_id = _run_job(repo_root, name, git_url or "",
                                            ref)
+                    # remember which tag/branch produced this snapshot —
+                    # commit_sha alone is meaningless to most readers
+                    conn.execute(
+                        "UPDATE snapshots SET stats = stats || %s"
+                        " WHERE id=%s",
+                        (json.dumps({"ref": ref}), snapshot_id))
                     outcome = f"snapshot {snapshot_id} ready"
                 conn.execute("UPDATE jobs SET status='done' WHERE id=%s",
                              (job_id,))

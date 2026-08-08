@@ -11,6 +11,7 @@ class RepoOut(BaseModel):
     name: str
     org: str
     latest_snapshot: int | None
+    ref: str | None = None   # tag/branch of the most recent index job
 
 
 class SnapshotOut(BaseModel):

@@ -78,7 +78,10 @@ def list_repos(conn=Depends(db)):
     return conn.execute("""
         SELECT r.name, o.name AS org,
                (SELECT max(s.id) FROM snapshots s
-                WHERE s.repo_id=r.id AND s.status='ready') AS latest_snapshot
+                WHERE s.repo_id=r.id AND s.status='ready') AS latest_snapshot,
+               (SELECT j.ref FROM jobs j
+                WHERE j.repo_id=r.id AND j.kind='index'
+                ORDER BY j.id DESC LIMIT 1) AS ref
         FROM repos r JOIN orgs o ON o.id=r.org_id ORDER BY r.name
         """).fetchall()
 

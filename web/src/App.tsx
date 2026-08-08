@@ -3,29 +3,37 @@ import { api, JobStatus, Repo, Snapshot } from "./api"
 import { Focus, FocusContext } from "./focus"
 import { Palette } from "./Palette"
 import { Explore, Lens, LENSES } from "./spaces/Explore"
-import { Guard, GUARD_SUBS, GuardSub } from "./spaces/Guard"
-import { Understand } from "./spaces/Understand"
+import { OverviewSub, Understand } from "./spaces/Understand"
 import { Ask } from "./views/Ask"
+import { Docs, PERSONA_LABELS, PERSONAS } from "./views/Docs"
 
-const SPACES = ["Understand", "Explore", "Guard"] as const
+const SPACES = ["Overview", "Explore", "Documentation"] as const
 type Space = (typeof SPACES)[number]
 
 const SPACE_ICONS: Record<Space, string> = {
-  Understand: "◫", Explore: "◎", Guard: "⛨",
+  Overview: "◫", Explore: "◎", Documentation: "▤",
 }
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+
+const refOf = (s: Snapshot): string | null => {
+  const r = s.stats?.ref
+  return typeof r === "string" && r !== "HEAD" ? r : null
+}
 
 export default function App() {
   const [repos, setRepos] = useState<Repo[]>([])
   const [repo, setRepo] = useState<string>("")
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [snap, setSnap] = useState<number | null>(null)
-  const [space, setSpace] = useState<Space>("Understand")
-  const [understandMode, setUnderstandMode] = useState<"glance" | "docs">("glance")
+  const [space, setSpace] = useState<Space>("Overview")
+  const [overviewSub, setOverviewSub] = useState<OverviewSub>("glance")
   const [exploreLens, setExploreLens] = useState<Lens>("Map")
-  const [guardSub, setGuardSub] = useState<GuardSub>("Changes")
+  const [docsPersona, setDocsPersona] = useState<string>("onboarding")
+  const [docsJob, setDocsJob] =
+    useState<{ snap: number; persona: string; repo: string
+               status: "writing" | "done" } | null>(null)
   const [focus, setFocusState] = useState<Focus | null>(null)
   const [user, setUser] = useState<{ user: string; auth: string } | null>(null)
   const [askOpen, setAskOpen] = useState(false)
@@ -36,6 +44,7 @@ export default function App() {
   const [addRef, setAddRef] = useState("")
   const [job, setJob] = useState<JobStatus | null>(null)
   const jobTimer = useRef<number | null>(null)
+  const docsTimer = useRef<number | null>(null)
 
   const setFocus = (f: Focus | null, opts?: { explore?: boolean }) => {
     setFocusState(f)
@@ -60,19 +69,51 @@ export default function App() {
     }).catch((e) => setError(String(e)))
   }, [repo])
 
-  useEffect(() => { setFocusState(null) }, [snap])
+  useEffect(() => { setFocusState(null); setOverviewSub("glance") }, [snap])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      const typing = t != null && (t.tagName === "INPUT"
+        || t.tagName === "TEXTAREA" || t.tagName === "SELECT"
+        || t.isContentEditable)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
         setPaletteOpen((o) => !o)
+      }
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !typing) {
+        e.preventDefault()
+        setPaletteOpen(true)
       }
       if (e.key === "Escape") { setPaletteOpen(false); setAskOpen(false) }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [])
+
+  // Documentation: picking a persona generates its docs if they don't exist
+  // yet, and the job keeps running (and stays visible) across spaces.
+  const selectDocsPersona = (p: string, snapId = snap) => {
+    setDocsPersona(p)
+    setSpace("Documentation")
+    if (snapId == null) return
+    api.docsTree(snapId, p).then((t) => {
+      if (t.length > 0) return   // already written — just open them
+      return api.docsGenerate(snapId, p).then(() => {
+        setDocsJob({ snap: snapId, persona: p, repo, status: "writing" })
+        const poll = () => {
+          api.docsTree(snapId, p).then((tt) => {
+            if (tt.length > 0) {
+              setDocsJob({ snap: snapId, persona: p, repo, status: "done" })
+            } else {
+              docsTimer.current = window.setTimeout(poll, 4000)
+            }
+          }).catch(() => { docsTimer.current = window.setTimeout(poll, 4000) })
+        }
+        docsTimer.current = window.setTimeout(poll, 4000)
+      })
+    }).catch((e) => setError(String(e)))
+  }
 
   const submitAdd = async () => {
     try {
@@ -90,8 +131,7 @@ export default function App() {
             const rs = await api.repos()
             setRepos(rs)
             setRepo(s.repo)
-            setSpace("Understand")
-            setUnderstandMode("glance")
+            setSpace("Overview")
             window.setTimeout(() => setJob(null), 4000)
           }
           return
@@ -106,32 +146,33 @@ export default function App() {
 
   useEffect(() => () => {
     if (jobTimer.current) window.clearTimeout(jobTimer.current)
+    if (docsTimer.current) window.clearTimeout(docsTimer.current)
   }, [])
 
   const subnav = (s: Space) => {
     if (s !== space) return null
-    if (s === "Understand") {
-      return (["glance", "docs"] as const).map((m) => (
-        <button key={m} className={`subnav ${understandMode === m ? "active" : ""}`}
-                onClick={() => setUnderstandMode(m)}>
-          {m === "glance" ? "At a glance" : "Documentation"}
-        </button>
-      ))
-    }
     if (s === "Explore") {
       return LENSES.map((l) => (
         <button key={l} className={`subnav ${exploreLens === l ? "active" : ""}`}
                 onClick={() => setExploreLens(l)}>{l}</button>
       ))
     }
-    return GUARD_SUBS.map((g) => (
-      <button key={g} className={`subnav ${guardSub === g ? "active" : ""}`}
-              onClick={() => setGuardSub(g)}>{g}</button>
-    ))
+    if (s === "Documentation") {
+      return PERSONAS.map(([v, label]) => (
+        <button key={v} className={`subnav ${docsPersona === v ? "active" : ""}`}
+                onClick={() => selectDocsPersona(v)}>{label}</button>
+      ))
+    }
+    return null
   }
 
   const initials = (user?.user ?? "?")
     .split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+
+  const prevSnap = (() => {
+    const i = snapshots.findIndex((s) => s.id === snap)
+    return i >= 0 ? snapshots[i + 1]?.id ?? null : null
+  })()
 
   return (
     <FocusContext.Provider value={{ focus, setFocus }}>
@@ -139,14 +180,17 @@ export default function App() {
         <aside className="sidenav">
           <h1>🦅 <span className="brand">Osprey</span></h1>
           <button className="sidesearch" onClick={() => setPaletteOpen(true)}
-                  title="Jump to any symbol, doc, or action">
-            <span>⌕ Search</span><kbd>⌘K</kbd>
+                  title="Jump to any symbol, doc, or action — press / or ⌘K">
+            <span>⌕ Search</span><kbd>/</kbd>
           </button>
           <nav className="sidenav-spaces">
             {SPACES.map((s) => (
               <div key={s}>
                 <button className={`spacebtn ${s === space ? "active" : ""}`}
-                        onClick={() => setSpace(s)}>
+                        onClick={() => {
+                          setSpace(s)
+                          if (s === "Overview") setOverviewSub("glance")
+                        }}>
                   <span className="spaceicon">{SPACE_ICONS[s]}</span>{s}
                 </button>
                 <div className="subnav-group">{subnav(s)}</div>
@@ -163,13 +207,18 @@ export default function App() {
           <header className="topbar">
             <select value={repo} onChange={(e) => setRepo(e.target.value)}
                     title="Which codebase to explore">
-              {repos.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+              {repos.map((r) => (
+                <option key={r.name} value={r.name}>
+                  {r.name}{r.ref && r.ref !== "HEAD" ? ` · ${r.ref}` : ""}
+                </option>
+              ))}
             </select>
             <select value={snap ?? ""} onChange={(e) => setSnap(Number(e.target.value))}
                     title="Which analyzed version">
               {snapshots.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.commit_sha.slice(0, 7)} · {fmtDate(s.created_at)}
+                  {s.commit_sha.slice(0, 7)}
+                  {refOf(s) ? ` · ${refOf(s)}` : ""} · {fmtDate(s.created_at)}
                 </option>
               ))}
             </select>
@@ -217,6 +266,23 @@ export default function App() {
                         ? "analyzing code" : "fetching"}</>}
             </div>
           )}
+          {docsJob && (
+            <div className={`jobcard ${docsJob.status === "done" ? "done" : "queued"}`}>
+              {docsJob.status === "writing"
+                ? <><span className="spinner" /> Writing{" "}
+                    <b>{PERSONA_LABELS[docsJob.persona]}</b> docs for{" "}
+                    <b>{docsJob.repo}</b> — keeps going while you browse</>
+                : <>✅ <b>{PERSONA_LABELS[docsJob.persona]}</b> docs for{" "}
+                    <b>{docsJob.repo}</b> are ready{" "}
+                    <button className="linkish" onClick={() => {
+                      setDocsPersona(docsJob.persona)
+                      setSpace("Documentation")
+                      setDocsJob(null)
+                    }}>read them →</button>
+                    <button className="linkish" style={{ marginLeft: "auto" }}
+                            onClick={() => setDocsJob(null)}>✕</button></>}
+            </div>
+          )}
           <main className={askOpen ? "with-drawer" : ""}>
             <div className="space-body">
               {error && <div className="error">{error}</div>}
@@ -234,18 +300,20 @@ export default function App() {
                   </div>
                 : (
                   <>
-                    {space === "Understand" && (
-                      <Understand snap={snap} mode={understandMode}
-                        prevSnap={(() => {
-                          const i = snapshots.findIndex((s) => s.id === snap)
-                          return i >= 0 ? snapshots[i + 1]?.id ?? null : null
-                        })()}
-                        onDocs={() => setUnderstandMode("docs")}
-                        onGuard={(sub) => { setSpace("Guard"); setGuardSub(sub as GuardSub) }} />
+                    {space === "Overview" && (
+                      <Understand snap={snap} prevSnap={prevSnap}
+                        snapshots={snapshots} sub={overviewSub}
+                        onSub={setOverviewSub}
+                        onDocs={() => setSpace("Documentation")} />
                     )}
                     {space === "Explore" && <Explore snap={snap} lens={exploreLens} />}
-                    {space === "Guard" && (
-                      <Guard snap={snap} snapshots={snapshots} sub={guardSub} />
+                    {space === "Documentation" && (
+                      <Docs key={`${snap}:${docsPersona}`} snap={snap}
+                        persona={docsPersona}
+                        generating={docsJob?.status === "writing"
+                          && docsJob.snap === snap
+                          && docsJob.persona === docsPersona}
+                        onPersona={selectDocsPersona} />
                     )}
                   </>
                 )}
@@ -269,14 +337,14 @@ export default function App() {
       </div>
       <Palette snap={snap} open={paletteOpen}
                onClose={() => setPaletteOpen(false)}
-               onOpenDoc={() => { setSpace("Understand"); setUnderstandMode("docs") }}
+               onOpenDoc={() => setSpace("Documentation")}
                actions={[
                  { label: "Add a repository by URL",
                    run: () => setAdding(true) },
                  { label: "Generate docs",
-                   run: () => { setSpace("Understand"); setUnderstandMode("docs") } },
+                   run: () => selectDocsPersona(docsPersona) },
                  { label: "Compare two versions (diff)",
-                   run: () => { setSpace("Guard"); setGuardSub("Changes") } },
+                   run: () => { setSpace("Overview"); setOverviewSub("Changes") } },
                ]} />
     </FocusContext.Provider>
   )

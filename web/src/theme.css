@@ -296,11 +296,42 @@ table.htable tbody tr:last-child td { border-bottom: none; }
   border-radius: 9px; font: inherit; font-size: 12.5px;
   color: var(--text-muted); cursor: pointer;
 }
-.sidesearch:hover { border-color: var(--accent); color: var(--text-secondary); }
+.sidesearch:hover, .sidesearch:focus-visible {
+  border-color: var(--accent); color: var(--text-secondary);
+  box-shadow: 0 0 0 3px var(--accent-dim); outline: none;
+}
 .sidesearch kbd {
   font: 600 10.5px ui-monospace, monospace; background: var(--surface-1);
   border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
 }
+
+/* Overview drill-in header */
+.backbar {
+  display: flex; align-items: center; gap: 10px; font-size: 14px;
+}
+
+/* Documentation persona chooser */
+.persona-pick {
+  max-width: 860px; margin: 6vh auto 0; text-align: center;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.persona-pick h2 { margin: 0; font-size: 19px; }
+.persona-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px; margin-top: 10px; text-align: left;
+}
+.persona-card {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px; font: inherit; color: inherit;
+  cursor: pointer; display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.persona-card:hover, .persona-card.active {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.persona-card b { font-size: 14.5px; }
+.persona-card .muted { font-size: 12.5px; line-height: 1.5; }
+.persona-go { color: var(--accent-hover); font-weight: 600; font-size: 13px; }
 
 /* empty-state CTA card */
 .cta-card {
@@ -327,8 +358,10 @@ button.primary:hover { background: var(--accent-hover); }
 .chip:hover { border-color: var(--accent); background: var(--accent-dim); }
 .linkish {
   background: none; border: none; color: var(--accent-hover);
-  cursor: pointer; font: inherit; padding: 0 4px; text-decoration: underline;
+  cursor: pointer; font: inherit; font-weight: 600; padding: 0 4px;
+  text-decoration: none;
 }
+.linkish:hover { color: #ffb1b3; }
 .toolbar { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .toolbar button, .toolbar a {
   background: var(--surface-2); border: 1px solid var(--border);

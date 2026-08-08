@@ -1,6 +1,6 @@
 // Typed client for the Osprey query API (mirrors osprey/api/models.py).
 
-export interface Repo { name: string; org: string; latest_snapshot: number | null }
+export interface Repo { name: string; org: string; latest_snapshot: number | null; ref: string | null }
 export interface Snapshot { id: number; commit_sha: string; status: string; stats: Record<string, unknown>; created_at: string }
 export interface Hotspot { symbol_id: number; name: string; kind: string; path: string; line: number | null; inbound: number }
 export interface Overview {

@@ -4,29 +4,39 @@ import remarkGfm from "remark-gfm"
 import { api, DocPage, DocPageMeta } from "../api"
 import { Mermaid } from "../Mermaid"
 
-const PERSONAS = [
-  ["onboarding", "Developer"],
-  ["sre", "SRE / On-call"],
-  ["tester", "QA / Tester"],
+export const PERSONAS = [
+  ["onboarding", "Developer",
+   "Architecture, entry points, and how the pieces fit — for someone joining this codebase."],
+  ["sre", "SRE / On-call",
+   "Where execution enters, what fails together, and the widest blast radii."],
+  ["tester", "QA / Tester",
+   "Regression risk, the surfaces worth exercising, and integration seams."],
 ] as const
 
-export function Docs({ snap }: { snap: number }) {
-  const [persona, setPersona] = useState<string>("onboarding")
+export const PERSONA_LABELS: Record<string, string> =
+  Object.fromEntries(PERSONAS.map(([v, label]) => [v, label]))
+
+// persona + generation state live in App so writing continues (and stays
+// visible) while the user browses other spaces
+export function Docs({ snap, persona, generating, onPersona }: {
+  snap: number
+  persona: string
+  generating: boolean
+  onPersona: (p: string) => void
+}) {
   const [tree, setTree] = useState<DocPageMeta[] | null>(null)
   const [slug, setSlug] = useState<string | null>(null)
   const [page, setPage] = useState<DocPage | null>(null)
-  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState("")
 
-  const loadTree = () => {
+  useEffect(() => {
+    setSlug(null)
+    setPage(null)
     api.docsTree(snap, persona).then((t) => {
       setTree(t)
-      if (t.length && slug === null) setSlug(t[0].slug)
+      if (t.length) setSlug(t[0].slug)
     }).catch((e) => setError(String(e)))
-  }
-
-  useEffect(() => { setSlug(null); setPage(null); loadTree() },
-    [snap, persona])
+  }, [snap, persona, generating])
 
   useEffect(() => {
     if (slug === null) return
@@ -35,56 +45,37 @@ export function Docs({ snap }: { snap: number }) {
       .catch((e) => setError(String(e)))
   }, [snap, persona, slug])
 
-  const generate = async () => {
-    setGenerating(true)
-    setError("")
-    try {
-      await api.docsGenerate(snap, persona)
-      const poll = () => {
-        api.docsTree(snap, persona).then((t) => {
-          if (t.length) {
-            setTree(t)
-            setSlug(t[0].slug)
-            setGenerating(false)
-          } else {
-            window.setTimeout(poll, 4000)
-          }
-        }).catch(() => window.setTimeout(poll, 4000))
-      }
-      window.setTimeout(poll, 4000)
-    } catch (e) {
-      setError(String(e))
-      setGenerating(false)
-    }
-  }
-
   if (tree !== null && tree.length === 0) {
     return (
       <div className="view">
-        <div className="hint">
-          {generating ? (
-            <p><span className="spinner" /> Writing documentation — reading
-              the graph, drafting sections, verifying every citation. This
-              takes a few minutes.</p>
-          ) : (
-            <>
-              <p>No documentation generated for this version yet.</p>
-              <p className="muted">Osprey writes docs grounded in the code
-                graph: diagrams are compiled from real dependencies, and
-                every <code>file:line</code> citation is verified against
-                the snapshot before publishing.</p>
-              <select value={persona}
-                      onChange={(e) => setPersona(e.target.value)}
-                      style={{ marginRight: 8 }}>
-                {PERSONAS.map(([v, label]) =>
-                  <option key={v} value={v}>{label}</option>)}
-              </select>
-              <button className="chip" onClick={generate}>
-                Generate docs for this audience</button>
-            </>
-          )}
-          {error && <div className="error">{error}</div>}
-        </div>
+        {generating ? (
+          <div className="hint">
+            <p><span className="spinner" /> Writing{" "}
+              <b>{PERSONA_LABELS[persona]}</b> documentation — reading the
+              graph, drafting sections, verifying every citation. This takes
+              a few minutes, and it keeps going if you browse elsewhere.</p>
+          </div>
+        ) : (
+          <div className="persona-pick">
+            <h2>Who is this documentation for?</h2>
+            <p className="muted">Osprey writes each audience its own pages
+              from the same code graph — diagrams compiled from real
+              dependencies, every <code>file:line</code> citation verified
+              against the snapshot before publishing.</p>
+            <div className="persona-cards">
+              {PERSONAS.map(([v, label, blurb]) => (
+                <button key={v}
+                        className={`persona-card ${v === persona ? "active" : ""}`}
+                        onClick={() => onPersona(v)}>
+                  <b>{label}</b>
+                  <span className="muted">{blurb}</span>
+                  <span className="persona-go">Generate →</span>
+                </button>
+              ))}
+            </div>
+            {error && <div className="error">{error}</div>}
+          </div>
+        )}
       </div>
     )
   }
@@ -93,8 +84,9 @@ export function Docs({ snap }: { snap: number }) {
     <div className="view docs">
       <div className="docs-body">
         <nav className="docs-tree">
-          <select value={persona} onChange={(e) => setPersona(e.target.value)}>
-            {PERSONAS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          <select value={persona} onChange={(e) => onPersona(e.target.value)}>
+            {PERSONAS.map(([v, label]) =>
+              <option key={v} value={v}>{label}</option>)}
           </select>
           {(tree ?? []).map((p) => (
             <button key={p.slug}
