@@ -56,6 +56,7 @@ export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
       minCameraRatio: 0.05,
       maxCameraRatio: 8,
       allowInvalidContainer: true,
+      defaultEdgeType: "arrow",   // edges are directed: A uses B
       defaultDrawNodeHover: drawNodeHover,
     })
     sigma.on("clickNode", (e) => clickRef.current?.(e.node))
