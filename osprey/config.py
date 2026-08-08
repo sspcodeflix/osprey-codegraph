@@ -5,8 +5,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="OSPREY_", env_file=".env",
                                       extra="ignore")
 
-    db_dsn: str = ("host=127.0.0.1 port=5433 dbname=osprey_dev "
-                   "user=postgres password=osprey")
+    db_dsn: str = ("host=127.0.0.1 port=5434 dbname=osprey "
+                   "user=osprey password=osprey")
     # API auth: empty token = dev mode (no auth); set in any real deployment
     api_token: str = ""
     # where the built web UI lives; empty = repo-relative default (dev).
