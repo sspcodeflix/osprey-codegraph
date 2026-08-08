@@ -7,16 +7,20 @@ export interface GraphApi {
   exportPng: (filename: string) => void
 }
 
-export function GraphCanvas({ graph, onNodeClick, onStageClick, apiRef }: {
+export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
+  onStageClick, apiRef }: {
   graph: Graph | null
   onNodeClick?: (id: string) => void
+  onNodeDoubleClick?: (id: string) => void
   onStageClick?: () => void
   apiRef?: MutableRefObject<GraphApi | null>
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const clickRef = useRef(onNodeClick)
+  const dblRef = useRef(onNodeDoubleClick)
   const stageRef = useRef(onStageClick)
   clickRef.current = onNodeClick
+  dblRef.current = onNodeDoubleClick
   stageRef.current = onStageClick
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export function GraphCanvas({ graph, onNodeClick, onStageClick, apiRef }: {
       allowInvalidContainer: true,
     })
     sigma.on("clickNode", (e) => clickRef.current?.(e.node))
+    sigma.on("doubleClickNode", (e) => {
+      e.preventSigmaDefault()
+      dblRef.current?.(e.node)
+    })
     sigma.on("clickStage", () => stageRef.current?.())
     if (apiRef) {
       apiRef.current = {
