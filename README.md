@@ -30,6 +30,10 @@ optional surface on top.
   QA / Tester) synthesized from the same graph facts. Citations are
   verified `path:line` by `path:line`; unverifiable claims are retried,
   then stripped. Generation runs on the worker and survives navigation.
+- **Staleness loop**: after every index, existing docs refresh
+  automatically - a structural diff decides which pages' inputs changed,
+  and only those are rewritten. Unchanged pages carry forward at zero
+  token cost (an identical re-index costs exactly 0 LLM tokens).
 - **Ask**: a chat drawer that can only use typed graph tools - every
   answer shows which checks it ran, and it refuses questions that are not
   about the indexed codebase.
@@ -180,9 +184,6 @@ osprey/
 
 ## Roadmap
 
-- Section-level doc staleness: regenerate only what a commit's structural
-  diff touched, so docs never go stale and tokens scale with the change,
-  not the repo.
 - More languages (SCIP has indexers for Java, Go, Rust, and more).
 - `public_api_freeze` gate rule, egress-proxy deploy profile, GitHub
   Action example.

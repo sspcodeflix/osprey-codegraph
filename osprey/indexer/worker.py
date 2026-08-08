@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import socket
 import tempfile
 import time
@@ -125,6 +126,26 @@ def run_worker(repo_root: Path, once: bool = False) -> None:
                         " WHERE id=%s",
                         (json.dumps({"ref": ref}), snapshot_id))
                     outcome = f"snapshot {snapshot_id} ready"
+                    if settings.docs_auto_refresh:
+                        # staleness loop: any persona documented on an
+                        # earlier snapshot of this repo gets refreshed
+                        personas = conn.execute("""
+                            SELECT DISTINCT dp.persona FROM doc_pages dp
+                            JOIN snapshots s ON s.id = dp.snapshot_id
+                            WHERE s.repo_id = (SELECT repo_id FROM snapshots
+                                               WHERE id=%s)
+                              AND dp.snapshot_id <> %s
+                            """, (snapshot_id, snapshot_id)).fetchall()
+                        for (p,) in personas:
+                            conn.execute(
+                                "INSERT INTO jobs (repo_id, ref, kind,"
+                                " payload) SELECT repo_id, %s, 'docs', %s"
+                                " FROM snapshots WHERE id=%s",
+                                (ref, json.dumps({"snapshot_id": snapshot_id,
+                                                  "persona": p}),
+                                 snapshot_id))
+                            print(f"job {job_id}: queued {p} docs refresh "
+                                  f"for snapshot {snapshot_id}")
                 conn.execute("UPDATE jobs SET status='done' WHERE id=%s",
                              (job_id,))
                 print(f"job {job_id}: {outcome}")

@@ -44,11 +44,118 @@ class PageSpec:
 class GenStats:
     pages: int = 0
     verified: int = 0
+    carried: int = 0               # pages reused unchanged: zero LLM tokens
     failed_cites_removed: int = 0
     retries: int = 0
     prompt_tokens: int = 0
     completion_tokens: int = 0
     notes: list[str] = field(default_factory=list)
+
+
+# -------------------------------------------------------------- staleness
+# The D1 loop (ARCHITECTURE.md §18): a structural diff between the last
+# documented snapshot and this one decides which pages must be rewritten.
+# Everything else is carried forward verbatim, so token cost scales with
+# the change, not the repository.
+
+@dataclass(frozen=True)
+class StalenessSignals:
+    changed_syms: frozenset       # stable symbols added/removed/re-edged
+    modules_touched: frozenset    # folders containing any of the above
+    module_edges_changed: bool    # any module-level edge added or removed
+    entries_changed: bool         # the entry-point set differs
+    hotspots_changed: bool        # the top-callers set differs
+
+
+def page_is_stale(kind: str, module: str | None,
+                  refs: frozenset | set, sig: StalenessSignals) -> bool:
+    """Pure decision: does this page's input data differ between snapshots?
+    refs are the stable symbols the old page actually cited."""
+    if refs & sig.changed_syms:
+        return True
+    if kind in ("overview", "architecture"):
+        return sig.module_edges_changed
+    if kind == "module":
+        return (module or "") in sig.modules_touched
+    if kind == "entries":
+        return sig.entries_changed
+    if kind == "hot":
+        return sig.hotspots_changed
+    return True   # unknown page kinds regenerate: fail safe, never stale-safe
+
+
+def _staleness_signals(conn, base: int, head: int) -> StalenessSignals:
+    sym_diff = """
+        (SELECT stable_symbol FROM symbols
+         WHERE snapshot_id=%(a)s AND NOT is_external)
+        EXCEPT
+        (SELECT stable_symbol FROM symbols
+         WHERE snapshot_id=%(b)s AND NOT is_external)"""
+    changed: set[str] = set()
+    for a, b in ((head, base), (base, head)):
+        changed |= {r["stable_symbol"]
+                    for r in conn.execute(sym_diff, {"a": a, "b": b})}
+    edge_diff = """
+        (SELECT ss.stable_symbol AS src, sd.stable_symbol AS dst, e.kind
+         FROM edges e JOIN symbols ss ON ss.id=e.src_id
+         JOIN symbols sd ON sd.id=e.dst_id WHERE e.snapshot_id=%(a)s)
+        EXCEPT
+        (SELECT ss.stable_symbol, sd.stable_symbol, e.kind
+         FROM edges e JOIN symbols ss ON ss.id=e.src_id
+         JOIN symbols sd ON sd.id=e.dst_id WHERE e.snapshot_id=%(b)s)"""
+    for a, b in ((head, base), (base, head)):
+        for r in conn.execute(edge_diff, {"a": a, "b": b}):
+            changed.add(r["src"])
+            changed.add(r["dst"])
+
+    modules: set[str] = set()
+    if changed:
+        modules |= {r["m"] for r in conn.execute("""
+            SELECT DISTINCT COALESCE(regexp_replace(f.path,'/[^/]+$',''),'')
+                   AS m
+            FROM symbols s JOIN files f ON f.id=s.file_id
+            WHERE s.snapshot_id IN (%(b)s, %(h)s)
+              AND s.stable_symbol = ANY(%(c)s)
+            """, {"b": base, "h": head, "c": list(changed)})}
+    me_diff = """
+        (SELECT src_module, dst_module, kind FROM module_edges
+         WHERE snapshot_id=%(a)s)
+        EXCEPT
+        (SELECT src_module, dst_module, kind FROM module_edges
+         WHERE snapshot_id=%(b)s)"""
+    me_changed = False
+    for a, b in ((head, base), (base, head)):
+        for r in conn.execute(me_diff, {"a": a, "b": b}):
+            me_changed = True
+            modules.add(r["src_module"])
+            modules.add(r["dst_module"])
+
+    entries_sql = ("SELECT stable_symbol FROM symbols"
+                   " WHERE snapshot_id=%s AND entry_kind IS NOT NULL")
+    entries = [{r["stable_symbol"] for r in conn.execute(entries_sql, (s,))}
+               for s in (base, head)]
+    hot_sql = """
+        SELECT s.stable_symbol FROM edges e JOIN symbols s ON s.id=e.dst_id
+        WHERE e.snapshot_id=%s AND e.kind='CALLS' AND NOT s.is_external
+          AND s.kind IN ('function','method')
+        GROUP BY s.stable_symbol ORDER BY count(*) DESC LIMIT 12"""
+    hots = [{r["stable_symbol"] for r in conn.execute(hot_sql, (s,))}
+            for s in (base, head)]
+    return StalenessSignals(frozenset(changed), frozenset(modules),
+                            me_changed, entries[0] != entries[1],
+                            hots[0] != hots[1])
+
+
+def _previous_docs_snapshot(conn, snap: int, persona: str) -> int | None:
+    row = conn.execute("""
+        SELECT s2.id FROM snapshots s1
+        JOIN snapshots s2 ON s2.repo_id = s1.repo_id
+        WHERE s1.id=%(s)s AND s2.id < s1.id AND s2.status='ready'
+          AND EXISTS (SELECT 1 FROM doc_pages dp
+                      WHERE dp.snapshot_id=s2.id AND dp.persona=%(p)s)
+        ORDER BY s2.id DESC LIMIT 1""",
+        {"s": snap, "p": persona}).fetchone()
+    return row["id"] if row else None
 
 
 # ---------------------------------------------------------------- outline
@@ -476,7 +583,8 @@ def embed_pages(conn, snap: int, persona: str, stats: GenStats) -> None:
 # -------------------------------------------------------------- top level
 
 def generate_docs(snapshot_id: int, persona: str,
-                  source_root: Path | None) -> dict:
+                  source_root: Path | None,
+                  force_full: bool = False) -> dict:
     provider = get_provider()
     with psycopg.connect(settings.db_dsn,
                          row_factory=psycopg.rows.dict_row) as conn:
@@ -488,32 +596,70 @@ def generate_docs(snapshot_id: int, persona: str,
             raise RuntimeError(f"snapshot {snapshot_id} not ready")
         repo = snap_row["repo"]
         stats = GenStats()
-
-        conn.execute("DELETE FROM doc_pages WHERE snapshot_id=%s"
-                     " AND persona=%s", (snapshot_id, persona))
         if persona not in PERSONAS:
             raise RuntimeError(f"unknown persona {persona!r}; "
                                f"available: {sorted(PERSONAS)}")
+
+        # staleness loop: diff against the last documented snapshot and
+        # rewrite only pages whose inputs changed
+        base = None if force_full else _previous_docs_snapshot(
+            conn, snapshot_id, persona)
+        old_pages: dict[str, dict] = {}
+        old_refs: dict[str, set] = {}
+        sig = None
+        if base is not None:
+            old_pages = {r["slug"]: r for r in conn.execute(
+                "SELECT id, slug, content_md, status FROM doc_pages"
+                " WHERE snapshot_id=%s AND persona=%s", (base, persona))}
+            for r in conn.execute(
+                    "SELECT dp.slug, dr.stable_symbol FROM doc_refs dr"
+                    " JOIN doc_pages dp ON dp.id=dr.page_id"
+                    " WHERE dp.snapshot_id=%s AND dp.persona=%s",
+                    (base, persona)):
+                old_refs.setdefault(r["slug"], set()).add(r["stable_symbol"])
+            sig = _staleness_signals(conn, base, snapshot_id)
+
+        conn.execute("DELETE FROM doc_pages WHERE snapshot_id=%s"
+                     " AND persona=%s", (snapshot_id, persona))
         for spec in outline(conn, snapshot_id, persona):
-            body = synthesize_page(provider, conn, snapshot_id, spec, repo,
-                                   source_root, stats, persona)
-            _, bad = _check_citations(conn, snapshot_id, body)
-            status = "verified" if not bad else "draft"
+            old = old_pages.get(spec.slug)
+            carried = False
+            if (old is not None and sig is not None
+                    and not page_is_stale(spec.kind, spec.module,
+                                          old_refs.get(spec.slug, set()),
+                                          sig)):
+                # citations must still hold on the NEW snapshot (line
+                # drift without structural change); if not, regenerate
+                _, bad = _check_citations(conn, snapshot_id,
+                                          old["content_md"])
+                if not bad:
+                    body, status, carried = old["content_md"], \
+                        old["status"], True
+            if not carried:
+                body = synthesize_page(provider, conn, snapshot_id, spec,
+                                       repo, source_root, stats, persona)
+                _, bad = _check_citations(conn, snapshot_id, body)
+                status = "verified" if not bad else "draft"
+            meta = {"kind": spec.kind}
+            if carried:
+                meta["carried_from"] = base
+                stats.carried += 1
             page = conn.execute(
                 "INSERT INTO doc_pages (snapshot_id, persona, slug, title,"
                 " position, parent_slug, content_md, status, meta)"
                 " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
                 (snapshot_id, persona, spec.slug, spec.title, spec.position,
                  spec.parent_slug, body, status,
-                 json.dumps({"kind": spec.kind}))).fetchone()
+                 json.dumps(meta))).fetchone()
             _doc_refs(conn, snapshot_id, page["id"], body)
             stats.pages += 1
             stats.verified += (status == "verified")
-            print(f"docs: {spec.slug} [{status}]")
+            print(f"docs: {spec.slug} [{'carried' if carried else status}]")
         embed_pages(conn, snapshot_id, persona, stats)
         conn.commit()
         return {
             "pages": stats.pages, "verified": stats.verified,
+            "carried": stats.carried, "base_snapshot": base,
             "retries": stats.retries,
             "bad_cites_removed": stats.failed_cites_removed,
             "prompt_tokens": stats.prompt_tokens,

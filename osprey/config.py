@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # demo instance: browsing is read-only, direct indexing and doc
     # generation are disabled; visitors file repo requests instead
     demo_mode: bool = False
+    # after each index job, refresh existing docs for that repo: the
+    # staleness loop rewrites only pages whose graph inputs changed
+    docs_auto_refresh: bool = True
     # where the built web UI lives; empty = repo-relative default (dev).
     # container images set this explicitly (the package is installed to
     # site-packages there, so repo-relative resolution has no meaning)
