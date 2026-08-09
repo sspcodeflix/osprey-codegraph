@@ -886,7 +886,8 @@ def ask(body: M.AskIn, conn=Depends(db)):
     try:
         return run_ask(snap["id"], snap["repo"], snap["commit_sha"],
                        body.question,
-                       [m.model_dump() for m in body.history[-8:]])
+                       [m.model_dump() for m in body.history[-8:]],
+                       context=body.context)
     except Exception as exc:  # noqa: BLE001 — surface provider problems
         raise HTTPException(
             502, f"chat provider unavailable: {str(exc)[:200]}") from exc

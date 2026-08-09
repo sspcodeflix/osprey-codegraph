@@ -188,9 +188,16 @@ Rules:
 
 
 def run_ask(snap: int, repo: str, commit: str, question: str,
-            history: list[dict]) -> dict:
+            history: list[dict], context: str = "") -> dict:
     provider = get_provider()
     tools = make_tools(snap)
+    system = SYSTEM.format(repo=repo, commit=commit[:8])
+    if context:
+        # a hint for resolving deixis, NOT a source of facts: the model must
+        # still verify with tools before stating anything
+        system += ("\n\nON-SCREEN CONTEXT (for resolving 'this'/'here' only; "
+                   "not a fact source, always verify with tools): "
+                   + str(context)[:600])
     # defense in depth: only user/assistant turns are ever replayed, so a
     # caller cannot smuggle a 'system' turn to override the scope guardrail
     # or fabricate 'tool' results, regardless of how history was built
@@ -200,8 +207,7 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
         if isinstance(m, dict) and m.get("role") in ("user", "assistant")
     ]
     messages = [
-        {"role": "system",
-         "content": SYSTEM.format(repo=repo, commit=commit[:8])},
+        {"role": "system", "content": system},
         *safe_history,
         {"role": "user", "content": question},
     ]

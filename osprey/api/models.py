@@ -259,6 +259,8 @@ class AskIn(BaseModel):
     snapshot_id: int
     question: str = Field(min_length=1, max_length=4000)
     history: list[AskMessage] = Field(default_factory=list, max_length=20)
+    # a short description of the on-screen view, to resolve "this"/"here"
+    context: str = Field(default="", max_length=600)
 
 
 class AskTraceStep(BaseModel):

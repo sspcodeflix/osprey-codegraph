@@ -15,9 +15,10 @@ const SUGGESTIONS = [
   "What code could we probably delete?",
 ]
 
-export function Ask({ snap, focusName }: {
+export function Ask({ snap, focusName, context }: {
   snap: number
   focusName?: string | null
+  context?: string
 }) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState("")
@@ -34,7 +35,7 @@ export function Ask({ snap, focusName }: {
     setMessages((ms) => [...ms, { role: "user", content: question }])
     setBusy(true)
     try {
-      const res = await api.ask(snap, question, history)
+      const res = await api.ask(snap, question, history, context)
       setMessages((ms) => [...ms, { role: "assistant",
         content: res.answer, trace: res.trace }])
     } catch (e) {

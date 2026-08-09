@@ -213,6 +213,28 @@ export default function App() {
     return i >= 0 ? snapshots[i + 1]?.id ?? null : null
   })()
 
+  // a short description of what the user is currently looking at, so Ask can
+  // resolve "this"/"here"/"the current view" before it queries the graph
+  const pageContext = (() => {
+    const parts: string[] = [`repository "${repo}"`]
+    if (space === "Overview") {
+      parts.push(overviewSub === "glance"
+        ? "the Overview dashboard (files, dependencies, hotspots, cycles, dead code)"
+        : `the ${overviewSub} view`)
+    } else if (space === "Explore") {
+      parts.push(exploreLens === "Map"
+        ? "the dependency map (folders and their call/import edges)"
+        : "the Focus view (a symbol's callers and callees)")
+    } else if (space === "Documentation") {
+      parts.push(`the ${PERSONA_LABELS[docsPersona] ?? docsPersona} documentation`)
+    }
+    if (focus) {
+      parts.push(`with ${focus.kind} "${focus.name}"`
+        + (focus.path ? ` (${focus.path})` : "") + " currently selected")
+    }
+    return "The user is looking at " + parts.join(", ") + "."
+  })()
+
   const submitRequest = async () => {
     try {
       await api.requestRepo(addUrl.trim(), addRef.trim(), contact.trim(),
@@ -455,7 +477,7 @@ export default function App() {
                           onClick={() => setAskOpen(false)}>✕</button>
                 </div>
                 <Ask key={`${snap}:${focus?.name ?? ""}`} snap={snap}
-                     focusName={focus?.name} />
+                     focusName={focus?.name} context={pageContext} />
               </aside>
             )}
             <button className={`ask-fab ${askOpen ? "open" : ""}`}

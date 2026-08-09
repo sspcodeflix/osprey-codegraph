@@ -90,8 +90,8 @@ export const api = {
   requestRepo: (git_url: string, ref: string, contact: string, note: string) =>
     post<{ id: number; status: string }>("/v1/repo-requests",
       { git_url, ref: ref || null, contact, note }),
-  ask: (snap: number, question: string, history: { role: string; content: string }[]) =>
-    post<AskResponse>("/v1/ask", { snapshot_id: snap, question, history }),
+  ask: (snap: number, question: string, history: { role: string; content: string }[], context?: string) =>
+    post<AskResponse>("/v1/ask", { snapshot_id: snap, question, history, context: context || "" }),
   sequence: (snap: number, symbolId: number, depth: number) =>
     get<Sequence>(`/v1/snapshots/${snap}/sequence?symbol_id=${symbolId}&depth=${depth}`),
   docsTree: (snap: number, persona: string) =>
