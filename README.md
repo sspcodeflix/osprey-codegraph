@@ -141,7 +141,7 @@ The server (`osprey-mcp`) talks to a running Osprey API over
 `OSPREY_API_URL` (and `OSPREY_API_TOKEN` if the API requires one). Point
 your assistant at it:
 
-**Claude Code / Claude Desktop** — add to your MCP config:
+**Claude Code / Claude Desktop** - add to your MCP config:
 
 ```json
 {
