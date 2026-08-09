@@ -64,3 +64,24 @@ export function PlusIcon() {
     </Icon>
   )
 }
+
+// collapse the sidebar: panel with a left-pointing chevron
+export function CollapseIcon() {
+  return (
+    <Icon size={16}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <path d="M16 9l-3 3 3 3" />
+    </Icon>
+  )
+}
+
+// reopen the sidebar (shown in the topbar when hidden)
+export function PanelIcon() {
+  return (
+    <Icon size={16}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+    </Icon>
+  )
+}

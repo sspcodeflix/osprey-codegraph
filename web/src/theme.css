@@ -45,7 +45,18 @@ body {
   border-right: 1px solid var(--border); display: flex;
   flex-direction: column; padding: 16px 10px; gap: 14px; }
 .sidenav h1 { font-size: 17px; margin: 0 0 4px 8px; letter-spacing: 0.02em;
-  font-weight: 700; }
+  font-weight: 700; display: flex; align-items: center; gap: 6px; }
+
+/* collapsible sidebar: slide it out, main content reclaims the width */
+.sidenav { transition: margin-left .18s ease; }
+.shell.nav-hidden .sidenav { margin-left: -217px; }
+.navtoggle {
+  background: none; border: none; cursor: pointer; padding: 4px;
+  color: var(--text-muted); border-radius: 7px; display: inline-flex;
+  margin-left: auto;
+}
+.navtoggle:hover { color: var(--text-primary); background: var(--surface-2); }
+.navtoggle.show { margin: 0 4px 0 0; }
 .sidenav-spaces { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .spacebtn { display: flex; align-items: center; gap: 10px; width: 100%;
   background: none; border: none; color: var(--text-secondary);

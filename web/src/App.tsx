@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { api, JobStatus, Repo, setToken, Snapshot, Unauthorized } from "./api"
 import { Focus, FocusContext } from "./focus"
 import { Palette } from "./Palette"
-import { DocsIcon, ExploreIcon, OverviewIcon, PlusIcon, SearchIcon } from "./icons"
+import { CollapseIcon, DocsIcon, ExploreIcon, OverviewIcon, PanelIcon, PlusIcon, SearchIcon } from "./icons"
 import { Explore, Lens, LENSES } from "./spaces/Explore"
 import { OverviewSub, Understand } from "./spaces/Understand"
 import { Ask } from "./views/Ask"
@@ -45,6 +45,8 @@ export default function App() {
   const [reqNote, setReqNote] = useState("")
   const [reqMsg, setReqMsg] = useState("")
   const [askOpen, setAskOpen] = useState(false)
+  const [navHidden, setNavHidden] = useState(
+    () => localStorage.getItem("osprey_nav_hidden") === "1")
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [error, setError] = useState("")
   const [adding, setAdding] = useState(false)
@@ -198,6 +200,11 @@ export default function App() {
     return null
   }
 
+  const toggleNav = () => setNavHidden((h) => {
+    localStorage.setItem("osprey_nav_hidden", h ? "0" : "1")
+    return !h
+  })
+
   const initials = (user?.user ?? "?")
     .split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()
 
@@ -241,9 +248,13 @@ export default function App() {
 
   return (
     <FocusContext.Provider value={{ focus, setFocus }}>
-      <div className="shell">
+      <div className={`shell ${navHidden ? "nav-hidden" : ""}`}>
         <aside className="sidenav">
-          <h1>🦅 <span className="brand">Osprey</span></h1>
+          <h1>🦅 <span className="brand">Osprey</span>
+            <button className="navtoggle" onClick={toggleNav}
+                    title="Hide sidebar">
+              <CollapseIcon /></button>
+          </h1>
           <div className="repo-block">
             <label className="muted small">Repository</label>
             <select value={repo} onChange={(e) => setRepo(e.target.value)}
@@ -296,6 +307,11 @@ export default function App() {
 
         <div className="shell-main">
           <header className="topbar">
+            {navHidden && (
+              <button className="navtoggle show" onClick={toggleNav}
+                      title="Show sidebar">
+                <PanelIcon /></button>
+            )}
             <button className="sidesearch topsearch"
                     onClick={() => setPaletteOpen(true)}
                     title="Jump to any symbol, doc, or action: press / or ⌘K">
