@@ -76,6 +76,18 @@ export function CollapseIcon() {
   )
 }
 
+// Osprey brand mark: a soaring bird (wings), sits in the gradient badge
+export function LogoMark() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"
+         strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 13c4.6 0 7.2-2.3 10-6 2.8 3.7 5.4 6 10 6" />
+      <path d="M12 8.2V12" />
+    </svg>
+  )
+}
+
 // hotspots section marker (replaces the 🔥 emoji)
 export function FlameIcon() {
   return (

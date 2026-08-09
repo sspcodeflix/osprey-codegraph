@@ -52,8 +52,21 @@ body {
 .sidenav { width: 216px; flex: none; background: var(--surface-1);
   border-right: 1px solid var(--border); display: flex;
   flex-direction: column; padding: 16px 10px; gap: 14px; }
-.sidenav h1 { font-size: 17px; margin: 0 0 4px 8px; letter-spacing: 0.02em;
-  font-weight: 700; display: flex; align-items: center; gap: 6px; }
+/* brand lockup: gradient logo badge + highlighted wordmark */
+.sidenav h1.brandlock {
+  display: flex; align-items: center; gap: 10px; margin: 2px 2px 8px 4px;
+  font-weight: 800;
+}
+.brandmark {
+  width: 32px; height: 32px; border-radius: 10px; flex: none; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #8f88ff, var(--accent) 55%, #4f46b8);
+  box-shadow: 0 4px 16px rgba(114, 105, 239, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.wordmark {
+  font-size: 20px; font-weight: 800; letter-spacing: -0.3px; line-height: 1;
+}
 
 /* collapsible sidebar: slide it out, main content reclaims the width */
 .sidenav { transition: margin-left .18s ease; }

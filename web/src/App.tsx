@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { api, JobStatus, Repo, setToken, Snapshot, Unauthorized } from "./api"
 import { Focus, FocusContext } from "./focus"
 import { Palette } from "./Palette"
-import { CollapseIcon, DocsIcon, ExploreIcon, OverviewIcon, PanelIcon, PlusIcon, SearchIcon } from "./icons"
+import { CollapseIcon, DocsIcon, ExploreIcon, LogoMark, OverviewIcon, PanelIcon, PlusIcon, SearchIcon } from "./icons"
 import { Explore, Lens, LENSES } from "./spaces/Explore"
 import { OverviewSub, Understand } from "./spaces/Understand"
 import { Ask } from "./views/Ask"
@@ -250,7 +250,9 @@ export default function App() {
     <FocusContext.Provider value={{ focus, setFocus }}>
       <div className={`shell ${navHidden ? "nav-hidden" : ""}`}>
         <aside className="sidenav">
-          <h1>🦅 <span className="brand">Osprey</span>
+          <h1 className="brandlock">
+            <span className="brandmark"><LogoMark /></span>
+            <span className="brand wordmark">Osprey</span>
             <button className="navtoggle" onClick={toggleNav}
                     title="Hide sidebar">
               <CollapseIcon /></button>
