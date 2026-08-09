@@ -127,7 +127,9 @@ header.topbar {
   font-weight: 700;
 }
 .brand {
-  background: linear-gradient(100deg, #a29bff, var(--accent) 60%, #4f46b8);
+  /* keep the whole gradient in the bright lavender range - dark stops on
+     the dark sidebar read as "faded" */
+  background: linear-gradient(100deg, #d6d2ff, #a99fff 55%, #8f88ff);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .topbar select, .searchbox input, select, input {
