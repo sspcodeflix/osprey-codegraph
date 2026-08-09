@@ -523,10 +523,13 @@ button.primary:hover { background: var(--accent-hover); }
 .chat { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
 .msg { display: flex; flex-direction: column; max-width: 78%; }
 .msg.user { align-self: flex-end; align-items: flex-end; }
-.msg.assistant { align-self: flex-start; }
+/* assistant answers carry code paths and lists: give them the room, and
+   let long path:line tokens wrap instead of overflowing */
+.msg.assistant { align-self: flex-start; max-width: 94%; }
 .bubble {
   padding: 9px 13px; border-radius: 14px; white-space: pre-wrap;
   background: var(--surface-2); border: 1px solid var(--border);
+  overflow-wrap: anywhere; min-width: 0;
 }
 .msg.user .bubble {
   background: var(--accent-dim); border-color: rgba(114, 105, 239, 0.4);
@@ -581,6 +584,7 @@ button.primary:hover { background: var(--accent-hover); }
   font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em;
   background: rgba(114, 105, 239, 0.10); border: 1px solid #333a63;
   border-radius: 5px; padding: 0.5px 5px; color: #beb8ff;
+  overflow-wrap: anywhere;   /* break long path:line tokens, never overflow */
 }
 .md pre {
   background: var(--surface-0); border: 1px solid var(--border);
@@ -634,7 +638,7 @@ nav.tabs.spaces button { font-size: 14.5px; padding: 8px 16px; }
 .ask-fab.open { font-size: 18px; }
 .ask-float {
   position: fixed; right: 24px; bottom: 92px; z-index: 60;
-  width: 400px; max-width: calc(100vw - 48px);
+  width: 460px; max-width: calc(100vw - 48px);
   height: 620px; max-height: calc(100vh - 130px);
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface-1); border: 1px solid var(--border);
