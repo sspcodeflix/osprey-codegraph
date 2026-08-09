@@ -20,6 +20,7 @@ import psycopg
 
 from osprey.api.providers import get_provider
 from osprey.config import settings
+from osprey.text import no_dashes
 
 CITE_RE = re.compile(r"\b([\w./-]+\.[A-Za-z]{1,4}):(\d{1,6})\b")
 # internal FACTS field names quoted as code in prose = a grounding leak
@@ -427,8 +428,9 @@ PERSONAS: dict[str, dict] = {
 
 def _no_em_dashes(md: str) -> str:
     """House style bans em/en-dashes; enforce it even when the model
-    ignores the prompt rule."""
-    return md.replace(" - ", " - ").replace("-", " - ").replace("-", "-")
+    ignores the prompt rule. Delegates to the shared, sweep-proof,
+    table-delimiter-aware helper."""
+    return no_dashes(md)
 
 
 def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,

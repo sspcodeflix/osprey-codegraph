@@ -15,6 +15,7 @@ import httpx
 
 from osprey.config import settings
 from osprey.api.providers import get_provider
+from osprey.text import no_dashes
 
 _client: httpx.Client | None = None
 
@@ -258,6 +259,6 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
 
     answer = text or ("I couldn't find enough in the graph to answer "
                       "that - try naming a specific function or file.")
-    # house style: no em-dashes in anything shown to the user
-    answer = answer.replace(" - ", " - ").replace("-", " - ").replace("-", "-")
+    # house style: no em-dashes shown to the user (table-delimiter-safe)
+    answer = no_dashes(answer)
     return {"answer": answer, "trace": trace}
