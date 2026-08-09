@@ -38,7 +38,8 @@ operator's responsibilities for a hardened deployment.
   token set (dev only), auth is open; **always set a token in any real
   deployment.**
 - **Bounded inputs.** Request bodies have length limits (URL, question,
-  history size and per-message length) to bound token spend and memory.
+  history size and per-message length, and the on-screen context hint)
+  to bound token spend and memory.
 - **Parameterized SQL only.** All queries use bound parameters.
 
 ### The AI surfaces (the prompt boundary)

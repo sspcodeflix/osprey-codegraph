@@ -797,7 +797,10 @@ rewrites only pages whose inputs changed; unchanged pages carry forward
 verbatim at **zero LLM tokens**, after re-checking their citations against
 the new snapshot (line-drift guard). Measured: an identical re-index
 carried 18/18 pages at 0 completion tokens; a real minor-release diff
-regenerated only the pages whose inputs moved.
+regenerated only the pages whose inputs moved. The intended trigger is a
+CI step that indexes each merge to the default branch; a ready-to-use
+GitHub Actions workflow ships in examples/github-actions/ (the git
+webhook from the §5 design remains future work).
 
 ### 19.2 Docs grounding: a second gate
 
