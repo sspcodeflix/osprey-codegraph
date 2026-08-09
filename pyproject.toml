@@ -34,3 +34,8 @@ packages = ["osprey"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.bandit]
+# B603: subprocess calls use argument vectors (never shell=True), which is
+# the intended secure pattern here; bandit flags every such call as Low.
+skips = ["B603"]

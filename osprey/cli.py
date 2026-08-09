@@ -103,11 +103,18 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"request {args.mark}: "
                       + (args.status if n else "not found"))
             else:
-                where = "" if args.all else " WHERE status='pending'"
-                rows = conn.execute(
-                    "SELECT id, status, git_url, ref, contact, note, "
-                    "created_at FROM repo_requests" + where
-                    + " ORDER BY id").fetchall()
+                # two full literal queries (no string-built SQL): status is
+                # filtered by a bound parameter, never concatenated
+                if args.all:
+                    rows = conn.execute(
+                        "SELECT id, status, git_url, ref, contact, note,"
+                        " created_at FROM repo_requests ORDER BY id"
+                    ).fetchall()
+                else:
+                    rows = conn.execute(
+                        "SELECT id, status, git_url, ref, contact, note,"
+                        " created_at FROM repo_requests WHERE status=%s"
+                        " ORDER BY id", ("pending",)).fetchall()
                 for r in rows:
                     rid, status, url, ref, contact, note, at = r
                     print(f"#{rid} [{status}] {url}@{ref}  <{contact}>  "

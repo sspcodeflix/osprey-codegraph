@@ -64,7 +64,9 @@ class ContainerExecutor:
             "--network", "bridge" if network else "none",
             "--memory", settings.container_memory,
             "--cpus", str(settings.container_cpus),
-            "--tmpfs", "/tmp:rw,size=1g",
+            # in-memory /tmp *inside the container*, not a host temp path:
+            # gives the sandbox a size-capped writable scratch area
+            "--tmpfs", "/tmp:rw,size=1g",  # nosec B108
             "-e", "HOME=/tmp",
             "-e", "npm_config_cache=/tmp/.npm",
             "-v", f"{cwd.resolve()}:/src:{repo_mode}",
