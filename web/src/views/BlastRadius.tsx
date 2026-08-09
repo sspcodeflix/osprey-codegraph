@@ -15,7 +15,7 @@ export function BlastRadius({ snap, preset, onPick }: {
                path: preset.path, line: preset.line, is_external: false }
     : null)
   const [starters, setStarters] = useState<Hotspot[]>([])
-  const [depth, setDepth] = useState(3)
+  const [depth] = useState(3)   // "a few hops" - fixed to keep the lens simple
   const [graph, setGraph] = useState<Graph | null>(null)
   const [summary, setSummary] = useState("")
   const [error, setError] = useState("")
@@ -83,17 +83,12 @@ export function BlastRadius({ snap, preset, onPick }: {
 
   return (
     <div className="view">
-      <p className="explain">Pick a piece of code and see everything that
-        would be affected if it changed. The orange dot is your pick; each
-        ring outward is one more step removed - inner rings break first.</p>
+      <p className="explain">Everything that would be affected if this
+        changed. Inner rings break first.</p>
       <div className="controls searchbox">
         <input placeholder="Search a function, class, or method…" value={q}
                onChange={(e) => setQ(e.target.value)} style={{ width: 320 }} />
-        <label>Depth</label>
-        <select value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
-          {[1, 2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}
-        </select>
-        {target && <span className="pill">{target.name} · {target.path}</span>}
+        {target && <span className="pill">{target.name}</span>}
         {summary && <span className="pill">{summary}</span>}
       </div>
       {results.length > 0 && !target?.name.includes(q) && (
@@ -115,10 +110,9 @@ export function BlastRadius({ snap, preset, onPick }: {
         ? <GraphCanvas graph={graph} />
         : (
           <div className="hint">
-            <p>Not sure where to start? These are the most depended-on
-              functions in this codebase:</p>
+            <p>Search above, or pick a busy function:</p>
             <div className="chips">
-              {starters.map((h) => (
+              {starters.slice(0, 6).map((h) => (
                 <button key={h.symbol_id} className="chip"
                         title={`${h.path}:${h.line}`}
                         onClick={() => {

@@ -15,7 +15,7 @@ export function Flow({ snap, preset, onPick }: {
                path: preset.path, line: preset.line, is_external: false }
     : null)
   const [starters, setStarters] = useState<Hotspot[]>([])
-  const [depth, setDepth] = useState(3)
+  const [depth] = useState(3)   // fixed to keep the lens simple
   const [seq, setSeq] = useState<Sequence | null>(null)
   const [error, setError] = useState("")
 
@@ -50,18 +50,12 @@ export function Flow({ snap, preset, onPick }: {
 
   return (
     <div className="view">
-      <p className="explain">What this function calls, in the order the calls
-        appear in the source. This is a static view from the dependency
-        graph, not a runtime trace: it does not follow branches, loops, or
-        conditions. Lanes are folders.</p>
+      <p className="explain">What this function calls, in source order. A
+        static view from the graph, not a runtime trace.</p>
       <div className="controls searchbox">
         <input placeholder="Pick a function to trace…" value={q}
                onChange={(e) => setQ(e.target.value)} style={{ width: 320 }} />
-        <label>Depth</label>
-        <select value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
-          {[2, 3, 4, 5].map((d) => <option key={d}>{d}</option>)}
-        </select>
-        {target && <span className="pill">{target.name} · {target.path}</span>}
+        {target && <span className="pill">{target.name}</span>}
         {seq?.truncated && <span className="pill">longest paths truncated</span>}
       </div>
       {results.length > 0 && (
@@ -81,9 +75,9 @@ export function Flow({ snap, preset, onPick }: {
       {error && <div className="error">{error}</div>}
       {!target && (
         <div className="hint">
-          <p>Or start from one of the busiest functions:</p>
+          <p>Search above, or pick a busy function:</p>
           <div className="chips" style={{ justifyContent: "center" }}>
-            {starters.map((h) => (
+            {starters.slice(0, 6).map((h) => (
               <button key={h.symbol_id} className="chip"
                       title={`${h.path}:${h.line}`}
                       onClick={() => pick(h.symbol_id, h.name, h.path, h.line)}>
