@@ -326,9 +326,6 @@ export default function App() {
               </span>
             )}
             <span style={{ marginLeft: "auto" }} />
-            <button className={`chip ask-toggle ${askOpen ? "on" : ""}`}
-                    onClick={() => setAskOpen(!askOpen)}
-                    title="Ask questions in plain English">✦ Ask</button>
             {user && (
               <span className="userchip" title={`auth: ${user.auth}`}>
                 <span className="avatar">{initials}</span>
@@ -405,7 +402,7 @@ export default function App() {
                             onClick={() => setDocsJob(null)}>✕</button></>}
             </div>
           )}
-          <main className={askOpen ? "with-drawer" : ""}>
+          <main>
             <div className="space-body">
               {error && <div className="error">{error}</div>}
               {snap == null
@@ -440,8 +437,15 @@ export default function App() {
                   </>
                 )}
             </div>
-            {askOpen && snap != null && (
-              <aside className="ask-drawer">
+          </main>
+        </div>
+
+        {/* AI chat as a floating widget: available on every space, and it
+            overlays instead of reflowing the page */}
+        {snap != null && (
+          <>
+            {askOpen && (
+              <aside className="ask-float">
                 <div className="drawer-head">
                   <b>✦ Ask</b>
                   {focus && <span className="pill">◉ {focus.name}
@@ -454,8 +458,14 @@ export default function App() {
                      focusName={focus?.name} />
               </aside>
             )}
-          </main>
-        </div>
+            <button className={`ask-fab ${askOpen ? "open" : ""}`}
+                    onClick={() => setAskOpen(!askOpen)}
+                    title="Ask questions in plain English"
+                    aria-label="Ask Osprey">
+              {askOpen ? "✕" : "✦"}
+            </button>
+          </>
+        )}
       </div>
       <Palette snap={snap} open={paletteOpen}
                onClose={() => setPaletteOpen(false)}
