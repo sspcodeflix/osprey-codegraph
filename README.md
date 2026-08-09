@@ -133,6 +133,31 @@ osprey-gate check --repo myrepo --base previous --head latest \
 Violations come with evidence (`file:line` of the offending import or
 call). The gate fails open by default; `--fail-closed` inverts that.
 
+## Keep docs current on every merge
+
+Documentation refresh is automatic once a commit is indexed: the worker
+diffs the new snapshot against the last documented one and rewrites only
+the pages whose inputs changed. The one piece you wire is the trigger.
+Add a CI step that indexes the merged commit, and every merge to your
+default branch keeps the docs current at a cost proportional to the diff.
+
+A ready-to-use GitHub Actions workflow is in
+[examples/github-actions/osprey-docs-refresh.yml](examples/github-actions/osprey-docs-refresh.yml).
+Copy it to `.github/workflows/`, set the `OSPREY_URL` and `OSPREY_TOKEN`
+secrets, and it calls the index endpoint on each push to `main`:
+
+```bash
+curl -fsS -X POST "$OSPREY_URL/v1/repos/index" \
+  -H "Authorization: Bearer $OSPREY_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"git_url":"https://github.com/OWNER/REPO","ref":"<merged-sha>"}'
+```
+
+Docs must be generated once (pick a persona in the UI); the refresh then
+keeps every generated persona up to date. If you already run `osprey-gate`
+in CI, you are indexing the head commit there anyway, so the refresh can
+piggyback on the same pipeline.
+
 ## Security and hosting a demo
 
 Osprey is built to analyze untrusted code without trusting it: remote
@@ -251,8 +276,8 @@ osprey/
 ## Roadmap
 
 - More languages (SCIP has indexers for Java, Go, Rust, and more).
-- `public_api_freeze` gate rule, egress-proxy deploy profile, GitHub
-  Action example.
+- A git webhook so indexing triggers on push without a CI step.
+- `public_api_freeze` gate rule, egress-proxy deploy profile.
 
 ## Acknowledgements
 

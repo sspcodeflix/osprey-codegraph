@@ -1,0 +1,44 @@
+# Keep Osprey docs current on every merge.
+#
+# Copy this to .github/workflows/osprey-docs-refresh.yml in your repo.
+# On each push to the default branch it asks your Osprey instance to index
+# the merged commit; Osprey then refreshes documentation automatically via
+# the staleness loop (only pages whose inputs changed are rewritten, so the
+# token cost scales with the diff, not the repo).
+#
+# Requirements:
+#   - A reachable Osprey instance (self-hosted).
+#   - Two repo/org secrets:
+#       OSPREY_URL   e.g. https://osprey.internal.example.com
+#       OSPREY_TOKEN the API bearer token (OSPREY_API_TOKEN on the server)
+#   - The Osprey instance must be able to fetch this repo. For a private
+#     repo, configure the instance's git credentials for the host; the
+#     host must be in OSPREY_ALLOWED_GIT_HOSTS.
+#   - Docs must have been generated at least once (pick a persona in the
+#     UI); the refresh then keeps every generated persona up to date.
+
+name: Osprey docs refresh
+
+on:
+  push:
+    branches: [main]        # set to your default branch
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Index merged commit (triggers docs refresh)
+        env:
+          OSPREY_URL: ${{ secrets.OSPREY_URL }}
+          OSPREY_TOKEN: ${{ secrets.OSPREY_TOKEN }}
+        run: |
+          curl -fsS -X POST "$OSPREY_URL/v1/repos/index" \
+            -H "Authorization: Bearer $OSPREY_TOKEN" \
+            -H "content-type: application/json" \
+            -d "$(cat <<JSON
+          {
+            "git_url": "${{ github.server_url }}/${{ github.repository }}",
+            "ref": "${{ github.sha }}"
+          }
+          JSON
+          )"
