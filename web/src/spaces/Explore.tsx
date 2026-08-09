@@ -1,18 +1,17 @@
 import { Symbol as Sym } from "../api"
 import { useFocus } from "../focus"
-import { BlastRadius } from "../views/BlastRadius"
-import { Flow } from "../views/Flow"
+import { Focus as FocusLens } from "../views/Focus"
 import { ModuleMap } from "../views/ModuleMap"
 
-export const LENSES = ["Map", "Blast radius", "Sequence"] as const
+export const LENSES = ["Map", "Focus"] as const
 export type Lens = (typeof LENSES)[number]
 
 export function Explore({ snap, lens }: { snap: number; lens: Lens }) {
   const { focus, setFocus } = useFocus()
 
   const symbolPreset = focus?.kind === "symbol" && focus.id != null
-    ? { symbol_id: focus.id, id: focus.id, name: focus.name, kind: "function",
-        path: focus.path ?? "", line: focus.line ?? null, inbound: 0 }
+    ? { id: focus.id, name: focus.name, path: focus.path ?? null,
+        line: focus.line ?? null }
     : null
 
   const pickedSymbol = (s: Sym) =>
@@ -33,16 +32,8 @@ export function Explore({ snap, lens }: { snap: number; lens: Lens }) {
                          module: m })
             : setFocus(null)} />
       )}
-      {lens === "Blast radius" && (
-        <BlastRadius key={`${snap}:${focus?.id ?? "none"}`} snap={snap}
-                     preset={symbolPreset} onPick={pickedSymbol} />
-      )}
-      {lens === "Sequence" && (
-        <Flow key={`${snap}:${focus?.id ?? "none"}`} snap={snap}
-              preset={focus?.kind === "symbol" && focus.id != null
-                ? { id: focus.id, name: focus.name, path: focus.path ?? null,
-                    line: focus.line ?? null } : null}
-              onPick={pickedSymbol} />
+      {lens === "Focus" && (
+        <FocusLens snap={snap} preset={symbolPreset} onPick={pickedSymbol} />
       )}
     </div>
   )

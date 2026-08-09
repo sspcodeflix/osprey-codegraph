@@ -50,10 +50,10 @@ export function Flow({ snap, preset, onPick }: {
 
   return (
     <div className="view">
-      <p className="explain">Follow what a function does, step by step:
-        each arrow is a real call from the graph, ordered by where it
-        appears in the source. Lanes are folders; numbers are the call
-        order.</p>
+      <p className="explain">What this function calls, in the order the calls
+        appear in the source. This is a static view from the dependency
+        graph, not a runtime trace: it does not follow branches, loops, or
+        conditions. Lanes are folders.</p>
       <div className="controls searchbox">
         <input placeholder="Pick a function to trace…" value={q}
                onChange={(e) => setQ(e.target.value)} style={{ width: 320 }} />

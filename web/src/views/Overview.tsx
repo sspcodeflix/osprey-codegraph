@@ -47,32 +47,6 @@ function langParts(languages: Record<string, number>) {
   ]
 }
 
-// ranked single-hue bars — identity is carried by the row label, so one
-// series color; values always direct-labeled (never color-alone)
-function HBars({ rows, color, unit }: {
-  rows: { key: string; label: string; value: number }[]
-  color: string
-  unit: (v: number) => string
-}) {
-  const max = Math.max(1, ...rows.map((r) => r.value))
-  return (
-    <div className="hbars">
-      {rows.map((r) => (
-        <div key={r.key} className="hbar-row">
-          <span className="hbar-label">{r.label}</span>
-          <span className="hbar-track">
-            <span className="hbar-fill" style={{
-              width: `${Math.max(1.5, (r.value / max) * 100)}%`,
-              background: color,
-            }} />
-          </span>
-          <span className="hbar-value">{unit(r.value)}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
   snap: number
   prevSnap?: number | null
@@ -106,9 +80,6 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
   if (!data) return <div className="view"><div className="hint">Loading…</div></div>
 
   const parts = langParts(data.languages)
-  const symbolRows = Object.entries(data.symbols)
-    .sort((a, b) => b[1] - a[1])
-    .map(([kind, n]) => ({ key: kind, label: kind, value: n }))
   const totalSymbols = Object.values(data.symbols).reduce((s, n) => s + n, 0)
   const prevSymbols = prev
     ? Object.values(prev.symbols).reduce((s, n) => s + n, 0) : null
@@ -133,12 +104,6 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
                   label="dependencies" />
             <Stat value={data.entry_points.toLocaleString()}
                   label="entry points" />
-          </div>
-
-          <div className="card">
-            <div className="card-head"><h3>Made of</h3>
-              <span className="muted">{fmtK(totalSymbols)} symbols</span></div>
-            <HBars rows={symbolRows} color="var(--series-1)" unit={fmtK} />
           </div>
 
           <div className="card">
@@ -236,19 +201,6 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
               <div className="muted small">Deltas appear once a second
                 version of this repo is analyzed.</div>
             )}
-          </div>
-
-          <div className="card">
-            <div className="card-head"><h3>Documentation</h3></div>
-            <p className="muted">Persona-targeted docs written from this
-              snapshot's graph - every claim cite-checked against the code.</p>
-            <div className="chips">
-              <span className="kindchip">Developer</span>
-              <span className="kindchip">SRE / On-call</span>
-              <span className="kindchip">QA Tester</span>
-            </div>
-            <button className="linkish" onClick={() => onNavigate("Docs")}>
-              open documentation →</button>
           </div>
         </div>
       </div>
