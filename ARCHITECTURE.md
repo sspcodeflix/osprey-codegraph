@@ -1,4 +1,4 @@
-# Osprey — System Architecture
+# Osprey - System Architecture
 
 **Version:** 0.1 (draft) · **Date:** 2026-08-08 · **Status:** pre-implementation
 
@@ -27,7 +27,7 @@ log; when a decision here is revisited, update both.
 5. **Boring infrastructure.** Postgres, containers, one queue. Every
    infrastructure choice must be operable by a team that has never seen Osprey.
 6. **Air-gapped is first-class.** Every feature must have a documented
-   local-only path, verified in CI — not a footnote.
+   local-only path, verified in CI - not a footnote.
 
 ## 2. System overview
 
@@ -69,7 +69,7 @@ only read path; the indexer is the only write path.
 A queue-driven worker that turns `(repo, commit_sha)` into a published
 snapshot. Stateless; all state lives in Postgres and the object store (raw
 `.scip` files kept for debugging/reprocessing). Concurrency = N workers pulling
-from one Postgres-backed job queue (`SELECT ... FOR UPDATE SKIP LOCKED` — no
+from one Postgres-backed job queue (`SELECT ... FOR UPDATE SKIP LOCKED` - no
 Redis/RabbitMQ until proven necessary).
 
 Pipeline stages per job (detailed in §5): fetch → detect → deps → index →
@@ -78,7 +78,7 @@ classify → normalize → load → publish.
 ### 3.2 osprey-api (service)
 
 FastAPI (Python 3.12), stateless, horizontally scalable. Connects to Postgres
-with a **read-only role** — the API physically cannot write graph data (it
+with a **read-only role** - the API physically cannot write graph data (it
 writes only `audit_log` via a separate narrow role). Every endpoint is typed,
 paginated, and cost-bounded (§7). No endpoint accepts raw query text in any
 query language.
@@ -103,7 +103,7 @@ revisit a static binary if customer CI images lack Python.
 An MCP server exposing **parameterized tools** that wrap API endpoints 1:1
 (`search_symbols`, `callers`, `impact`, `path_between`, `module_graph`,
 `diff_summary`). The model fills typed arguments; it never generates SQL or
-Cypher. Provider shim with two backends: local (Ollama/vLLM — default) and
+Cypher. Provider shim with two backends: local (Ollama/vLLM - default) and
 cloud (opt-in per org). See §10.
 
 ## 4. Data model
@@ -233,8 +233,8 @@ CREATE TABLE audit_log (
 );
 ```
 
-**Sizing intuition** (validated in M0, §16): 1M LOC ≈ 150–400k symbols,
-1.5–4M occurrences, 0.5–2M edges ≈ 1–3 GB per snapshot with indexes. Plain
+**Sizing intuition** (validated in M0, §16): 1M LOC ≈ 150-400k symbols,
+1.5-4M occurrences, 0.5-2M edges ≈ 1-3 GB per snapshot with indexes. Plain
 B-tree indexes with `snapshot_id` leading are sufficient at tens of snapshots;
 declarative partitioning by `snapshot_id` range is the known escape hatch if
 retention grows, and requires no schema change to adopt.
@@ -247,18 +247,18 @@ write to staging tables (`_stg` suffix, same shapes), and **publish** is a
 single transaction that inserts into the real tables and flips `status` to
 `ready`.
 
-1. **fetch** — shallow clone at `commit_sha` into a tmpfs workdir.
-2. **detect** — enumerate index roots: `tsconfig.json`/`package.json` for
+1. **fetch** - shallow clone at `commit_sha` into a tmpfs workdir.
+2. **detect** - enumerate index roots: `tsconfig.json`/`package.json` for
    TS/JS (a monorepo yields several), Python package roots via
    `pyproject.toml`/setup files. Record per-root config in the job.
-3. **deps** *(mode per repo, recorded on the snapshot)* —
+3. **deps** *(mode per repo, recorded on the snapshot)* -
    - `none` (default for untrusted repos): skip dependency installation.
      First-party resolution still works; imports of third-party packages
      resolve to external stub symbols. Degraded but safe.
    - `proxied`: install dependencies inside the sandbox with egress restricted
      to an allowlisted registry proxy (npm mirror / PyPI mirror). Required for
      precise types flowing through third-party APIs.
-4. **index** — run `scip-typescript` / `scip-python` per root, **network
+4. **index** - run `scip-typescript` / `scip-python` per root, **network
    disabled**, in the sandbox (§11.1). Output: one `.scip` protobuf per root,
    archived to the object store.
    - **Structural fallback tier** (harvested from code-graph-rag's core
@@ -268,37 +268,37 @@ single transaction that inserts into the real tables and flips `status` to
      the file. Affected files carry `precision='structural'`; their symbols
      and edges surface in every API response with that flag, and the UI renders
      them visually distinct. A compiler-grade indexer degrades grumpily;
-     this tier makes Osprey degrade gracefully — partial facts beat holes,
+     this tier makes Osprey degrade gracefully - partial facts beat holes,
      as long as they are honestly labeled.
-5. **classify** — the call-site classifier (§6): a tree-sitter pass that tags
+5. **classify** - the call-site classifier (§6): a tree-sitter pass that tags
    each SCIP reference occurrence as *call* vs *bare reference*, and extracts
    `INHERITS`/`IMPLEMENTS` from definition-site syntax.
-6. **normalize** — merge per-root indexes; dedupe symbols; compute
+6. **normalize** - merge per-root indexes; dedupe symbols; compute
    `stable_symbol`; attribute occurrences to enclosing definitions; aggregate
    edges and module_edges.
-7. **load** — bulk `COPY` into staging tables.
-8. **publish** — transactional move + `status='ready'`.
+7. **load** - bulk `COPY` into staging tables.
+8. **publish** - transactional move + `status='ready'`.
 
 **Triggers:** webhook on merge to default branch, nightly cron, `osprey-gate`
-request for a PR head, or manual CLI. No incremental indexing in v1 — SCIP
+request for a PR head, or manual CLI. No incremental indexing in v1 - SCIP
 indexers are whole-project; a 1M-LOC TS repo indexes in low tens of minutes
 (budget: §12), which is acceptable at merge/nightly cadence. Incremental is
 explicitly out of scope until the whole-project cost is proven to hurt (§15).
 
 ## 6. Call-graph derivation
 
-SCIP deliberately has no call edges — it records symbols and role-tagged
+SCIP deliberately has no call edges - it records symbols and role-tagged
 occurrences (definition / import / read / write). Osprey derives edges in two
 steps. This is the only place Osprey interprets syntax itself, and it is
 ~hundreds of lines per language, not tens of thousands.
 
-**Step 1 — attribution.** Every reference occurrence is attributed to the
+**Step 1 - attribution.** Every reference occurrence is attributed to the
 tightest enclosing *definition* span in the same file (SCIP's
 `typed_enclosing_range` when the indexer emits it; otherwise binary search
 over definition spans). References outside any definition attribute to the
 file's module symbol. This yields `enclosing_symbol_id` on `occurrences`.
 
-**Step 2 — classification.** A tree-sitter query at each reference site
+**Step 2 - classification.** A tree-sitter query at each reference site
 answers one narrow question: *is this identifier in call position?*
 
 - TS/JS: is it the callee of `call_expression` / `new_expression`? (including
@@ -306,20 +306,20 @@ answers one narrow question: *is this identifier in call position?*
 - Python: is it the function child of a `call` node?
 
 Call position → `CALLS` edge (enclosing → target). Otherwise → `REFERENCES`
-(the function passed as a value, stored in a dict, exported in a table — the
+(the function passed as a value, stored in a dict, exported in a table - the
 distinction the original project got right and SCIP alone cannot make).
 Instantiation (`new Foo()`, `Foo()` where the target is a class) is `CALLS`
-with `dst.kind = 'class'` — queryable without a separate edge kind.
+with `dst.kind = 'class'` - queryable without a separate edge kind.
 
 `INHERITS` / `IMPLEMENTS` come from definition-site syntax (extends/implements
 clauses, Python base lists) with base identifiers resolved through SCIP
-occurrences at those positions — so resolution stays compiler-grade even
+occurrences at those positions - so resolution stays compiler-grade even
 though the clause detection is syntactic. `IMPORTS` maps directly from SCIP
 import-role occurrences.
 
 **Known limits (accepted, documented):** dynamic dispatch through
 `getattr`/index-signature access is not resolved (Pyright/tsc don't resolve it
-either — nobody does statically); decorators that swap implementations map to
+either - nobody does statically); decorators that swap implementations map to
 the decorated symbol; re-export chains resolve to the original symbol (SCIP
 does this correctly, which is a win over path-based heuristics).
 
@@ -364,7 +364,7 @@ capability = new endpoint, never a query-language passthrough.
 
 Symbols are matched across snapshots by `stable_symbol`. SCIP symbol strings
 embed the package **version** (`scip-typescript npm mylib 1.4.2 src/A#f().`),
-which churns every release in monorepos and would make every diff noisy —
+which churns every release in monorepos and would make every diff noisy -
 so `stable_symbol` replaces the version segment with `_`. Both forms are
 stored; diff and rules use `stable_symbol`, cross-repo dependency linking uses
 the verbatim form.
@@ -372,7 +372,7 @@ the verbatim form.
 `diff(base, head)` = set difference on `(stable_src, stable_dst, kind)` plus
 symbol-level added/removed/moved (moved = same `stable_symbol`, different
 file), rolled up per module. Output is JSON plus a human summary. Cost: two
-index scans — this is the payoff of immutable snapshots.
+index scans - this is the payoff of immutable snapshots.
 
 ### 8.2 Rules (`osprey.rules.yaml`, lives in the repo)
 
@@ -397,7 +397,7 @@ rules:
 the diff: `deny` rules check module_edges; `no_new_cycles` compares cycle
 counts; `public_api_freeze` checks the exported-symbol diff. Violations report
 the rule, the offending edge, and the example site (`first_file_id:first_line`).
-Exit 1 on any `error`. The gate never blocks on Osprey being down — it fails
+Exit 1 on any `error`. The gate never blocks on Osprey being down - it fails
 open with a loud warning (configurable to fail closed).
 
 ### 8.3 Entry points & dead code
@@ -408,14 +408,14 @@ registrations), `main` guards, CLI command registrations, and exported public
 API of designated packages. Entry points power two features:
 
 - **Dead code**: symbols unreachable from any entry point via
-  CALLS/REFERENCES/INHERITS closure — a single reverse-reachability query over
+  CALLS/REFERENCES/INHERITS closure - a single reverse-reachability query over
   `edges`, exposed as `/deadcode` and as a gate rule
   (`no_new_dead_code: warn`). The lesson from code-graph-rag: dead-code
   detection is only as good as entry-point detection, so `structural`-precision
   files suppress dead-code claims for their symbols (a heuristic hole must not
   become a deletion recommendation).
 - **Surface-aware blast radius**: impact reports and PR comments name the
-  *public endpoints* whose reachable set includes changed code — "this PR
+  *public endpoints* whose reachable set includes changed code - "this PR
   touches code reachable from `POST /billing/charge`" lands harder with a
   reviewer than a count of affected functions.
 
@@ -435,8 +435,8 @@ client-side traversal of a full graph dump.
 - **Diff view:** two snapshots, added edges green / removed red, driven by
   `/v1/diff`.
 
-Rendering: Sigma.js (WebGL) — chosen because it stays interactive above
-10k elements where SVG/D3-force dies at ~1–2k. Layout computed server-side
+Rendering: Sigma.js (WebGL) - chosen because it stays interactive above
+10k elements where SVG/D3-force dies at ~1-2k. Layout computed server-side
 for module views (deterministic, cacheable), client-side force only within
 small drill-down scopes.
 
@@ -452,7 +452,7 @@ small drill-down scopes.
 - Provider shim: `local` (Ollama/vLLM endpoint; default) or `cloud`
   (Anthropic/OpenAI/Google; per-org opt-in with an explicit "code excerpts
   leave the network" acknowledgment recorded in org settings).
-- Semantic/embedding search is deferred past Phase 3 v1 — name/structure
+- Semantic/embedding search is deferred past Phase 3 v1 - name/structure
   search covers most queries; embeddings add a vector store and an
   air-gap-complicating model dependency for marginal gain. Revisit with usage
   data.
@@ -474,7 +474,7 @@ pipeline runs contained:
 - npm lifecycle scripts disabled (`--ignore-scripts`); pip with
   `--only-binary :all:` preferred, sdist builds allowed only in `proxied`
   mode inside the sandbox.
-- Default `deps_mode=none` for newly added repos — precise third-party types
+- Default `deps_mode=none` for newly added repos - precise third-party types
   are an upgrade you opt into per repo, not a default risk.
 
 ### 11.2 Service boundaries
@@ -497,26 +497,26 @@ pipeline runs contained:
 | `callers` depth 3 on 10M-edge snapshot, p95 | < 300 ms |
 | `subgraph` 2k nodes, p95 | < 1 s |
 | `diff` between adjacent snapshots | < 5 s |
-| Storage per 1M LOC snapshot | 1–3 GB |
+| Storage per 1M LOC snapshot | 1-3 GB |
 
 Retention: keep last N snapshots per repo (default 30) + protected snapshots
 (default-branch heads, releases, any snapshot referenced by a rules baseline);
 nightly GC job deletes the rest in batches. These budgets are M0 exit
-criteria, not aspirations — if M0 misses them by >2×, the design (Postgres
+criteria, not aspirations - if M0 misses them by >2×, the design (Postgres
 CTEs, whole-project indexing) gets re-examined before any product code is
 built on top.
 
 ## 13. Deployment
 
-- **v1: single-node docker-compose** — Postgres 16, api, indexer (×N), web,
+- **v1: single-node docker-compose** - Postgres 16, api, indexer (×N), web,
   proxy. Suits the GB10-class box (20 cores / 121 GB) with room for a local
   LLM (vLLM/Ollama) beside it. aarch64 and x86_64 images from day one (dev box
-  is aarch64 — this is a build-matrix requirement, not an afterthought).
+  is aarch64 - this is a build-matrix requirement, not an afterthought).
 - **Air-gapped install:** a single artifact bundle (images + SCIP indexer
   binaries + a local model) importable without internet; CI includes an
-  egress-blocked integration test that must pass — that's what "first-class"
+  egress-blocked integration test that must pass - that's what "first-class"
   means operationally.
-- Kubernetes (Helm) when a customer needs HA — the services are stateless and
+- Kubernetes (Helm) when a customer needs HA - the services are stateless and
   Postgres HA is a solved, buyable problem; nothing in the design assumes
   single-node.
 
@@ -534,67 +534,67 @@ built on top.
 | 8 | `stable_symbol` version normalization | SCIP symbols embed package versions → cross-snapshot diff would drown in version churn | Two symbol forms stored; verbatim kept for cross-repo linking |
 | 9 | `deps_mode=none` default | Untrusted-repo indexing must not run package scripts; degraded external resolution is a safe default | Third-party type precision requires opt-in `proxied` mode |
 | 10 | Defer embeddings/semantic search | Avoids vector store + model dependency in v1; structure covers most queries | "Find code that does X" fuzzy search absent until data justifies it |
-| 11 | Structural fallback tier (tree-sitter), precision-flagged | Graceful degradation on broken/unindexable projects — code-graph-rag's core virtue, adopted with honest labeling instead of silent mixing | Two-tier precision complicates every consumer (flag must propagate to UI/gate/MCP); heuristic edges re-enter the system, quarantined by flag |
+| 11 | Structural fallback tier (tree-sitter), precision-flagged | Graceful degradation on broken/unindexable projects - code-graph-rag's core virtue, adopted with honest labeling instead of silent mixing | Two-tier precision complicates every consumer (flag must propagate to UI/gate/MCP); heuristic edges re-enter the system, quarantined by flag |
 | 12 | Entry-point detection + dead code as queries | High enterprise value at low cost once the call graph exists; makes blast radius endpoint-aware | Framework-specific detection patterns to maintain (bounded: routes/main/CLI per language) |
 | 13 | Harvest code-graph-rag's test corpus as ground truth | 250k lines of MIT-licensed real-world edge cases (JSX refs, tsconfig paths, import fallbacks) de-risk M0 classifier validation for free | Attribution required; fixtures must be curated, not bulk-copied |
 
 ## 15. Non-goals (v1)
 
-- Code editing, refactoring, shell execution — permanently out of the core.
-- Data-flow / taint tracking (`FLOWS_TO`-style) — real feature, new work
+- Code editing, refactoring, shell execution - permanently out of the core.
+- Data-flow / taint tracking (`FLOWS_TO`-style) - real feature, new work
   (SCIP offers nothing here); revisit post-v1 with a concrete security
   use-case owner. code-graph-rag's taint model (§17) is the reference design
   when that day comes: its resource/kind/via schema is sound; its
   implementation is coupled to their parser internals and is not portable.
-- Languages beyond TS/JS + Python — the schema and pipeline are
+- Languages beyond TS/JS + Python - the schema and pipeline are
   language-agnostic (add an indexer + a classifier query); Java/Go are
   candidates 3 and 4, chosen by customer demand not symmetry. The structural
   fallback tier (Decision 11) additionally opens a cheap long-tail path:
   code-graph-rag proved a language can get modules/functions/classes/imports
-  from a YAML pattern file alone (their Ruby tier) — that pattern fits the
+  from a YAML pattern file alone (their Ruby tier) - that pattern fits the
   fallback tier as-is.
 - Incremental indexing; per-keystroke/live updates (merge + nightly cadence).
 - Embeddings/semantic search (Decision 10).
-- SaaS multi-region — self-hosted single-region first; schema is
+- SaaS multi-region - self-hosted single-region first; schema is
   multi-tenant-ready (`org_id` everywhere) so SaaS is a deployment change,
   not a redesign.
 
 ## 16. Milestones & open risks
 
-**M0 — proving spike (~1 week).** Run scip-typescript and scip-python on two
+**M0 - proving spike (~1 week).** Run scip-typescript and scip-python on two
 real repos (the code-graph-rag clone qualifies for Python); parse the `.scip`
 protobuf; load the §4 schema; implement attribution + classification for one
 language; answer `callers("X", depth=3)` correctly against manually verified
 ground truth; measure against §12 budgets. Ground truth comes cheap: curate
-classifier fixtures from code-graph-rag's own test corpus (§17) — their tests
+classifier fixtures from code-graph-rag's own test corpus (§17) - their tests
 encode exactly the edge cases (callbacks stored in dicts, JSX component
 references, re-export chains) that distinguish CALLS from REFERENCES.
-**Exit = go/no-go on the whole architecture.** The riskiest assumptions —
-classifier fidelity and CTE performance — die or survive here for the price
+**Exit = go/no-go on the whole architecture.** The riskiest assumptions -
+classifier fidelity and CTE performance - die or survive here for the price
 of a week.
 
-**M1 — Phase 0 (~4 wks):** indexer pipeline + sandbox + API core.
-**M2 — Phase 1 (~5 wks):** osprey-web (module map, drill-down, blast radius,
+**M1 - Phase 0 (~4 wks):** indexer pipeline + sandbox + API core.
+**M2 - Phase 1 (~5 wks):** osprey-web (module map, drill-down, blast radius,
 DSM, diff view).
-**M3 — Phase 2 (~4 wks):** osprey-gate + rules engine + PR comments.
-**M4 — Phase 3 (~4 wks):** osprey-mcp + provider shim + chat panel.
+**M3 - Phase 2 (~4 wks):** osprey-gate + rules engine + PR comments.
+**M4 - Phase 3 (~4 wks):** osprey-mcp + provider shim + chat panel.
 
 **Open risks, ranked:**
 
-1. **Classifier fidelity** — if call-position detection is materially wrong for
+1. **Classifier fidelity** - if call-position detection is materially wrong for
    idiomatic TS (optional chaining, HOC patterns), CALLS edges lose trust.
    Mitigated by M0 ground-truth checks; fallback is shipping REFERENCES-only
    with CALLS behind a flag.
-2. **Monorepo root detection** — multi-tsconfig repos are messy in practice
+2. **Monorepo root detection** - multi-tsconfig repos are messy in practice
    (project references, path aliases). Budget real time in M1; scip-typescript
    has `--infer-tsconfig` but expect edge cases.
-3. **scip-python on untyped code** — Pyright's inference degrades without
+3. **scip-python on untyped code** - Pyright's inference degrades without
    annotations; resolution quality on legacy Python needs an honest measured
    number in M0, published in docs (enterprises will ask).
-4. **CTE performance cliff** — dense graphs (utility symbols with 10k callers)
+4. **CTE performance cliff** - dense graphs (utility symbols with 10k callers)
    can blow up bounded traversals; caps + `truncated` flags are the design
    answer, M0 must confirm they trigger gracefully, not at 30 s.
-5. **Symbol stability across indexer upgrades** — a scip-typescript upgrade
+5. **Symbol stability across indexer upgrades** - a scip-typescript upgrade
    that changes symbol formatting would poison diffs; pin indexer versions per
    org, re-baseline explicitly on upgrade (this is why `indexer_versions` is
    part of the snapshot identity).
@@ -602,7 +602,7 @@ DSM, diff view).
 ## 17. Provenance: what Osprey takes from code-graph-rag
 
 Osprey began as a study of [code-graph-rag](https://github.com/vitali87/code-graph-rag)
-(MIT-licensed). It is not a fork — no code is inherited — but five of its ideas
+(MIT-licensed). It is not a fork - no code is inherited - but five of its ideas
 are deliberately harvested, and honesty about that lineage keeps the decision
 log meaningful.
 
@@ -619,15 +619,15 @@ log meaningful.
    (§8.3, Decision 12). Their endpoint/RPC detection (~3.7k lines) proved the
    concept and catalogued the framework patterns worth detecting.
 4. **The test corpus as ground truth** (§16, Decision 13). 250k lines of
-   tests encoding years of real-world parsing edge cases — curated (with
+   tests encoding years of real-world parsing edge cases - curated (with
    attribution) into M0 classifier fixtures rather than re-discovered.
 5. **The YAML-pattern language tier** (§15). Their Ruby support demonstrated a
-   language can join the graph from a single ast-grep pattern file — the
+   language can join the graph from a single ast-grep pattern file - the
    adoption path for long-tail languages in Osprey's fallback tier.
 
 Their **taint/data-flow schema** (`FLOWS_TO` with `kind`/`via` properties,
 Resource nodes for files/env/network/db) is recorded as the reference design
-for a future phase — the model is sound; the implementation is not portable.
+for a future phase - the model is sound; the implementation is not portable.
 
 Their **assurance-case security documentation** (explicit threat model, trust
 boundaries, "what users should not expect") is adopted as practice: Osprey's
@@ -639,7 +639,7 @@ database (Decision 3), hand-written per-language resolution (Decision 1), and
 live file-watching (snapshot cadence instead). Each rejection is argued in the
 decision log, not assumed.
 
-## 18. Osprey Docs — the AI documentation platform (design)
+## 18. Osprey Docs - the AI documentation platform (design)
 
 **Status:** design (2026-08-08), pre-implementation. This section extends the
 system with a documentation product built ON the graph, not beside it.
@@ -651,23 +651,23 @@ agents to synthesize **structured, persona-targeted documentation with
 diagrams**, persists it per snapshot, and serves it through the portal with
 RAG chat.
 
-The category (auto-wiki + repo chat) is contested — DeepWiki, Swimm,
+The category (auto-wiki + repo chat) is contested - DeepWiki, Swimm,
 Mintlify. The wedge is that competitors are **RAG-over-text**: their prose
 and diagrams are what an LLM *guessed* about structure. Osprey docs are
 **grounded in the deterministic graph**:
 
-1. **Diagrams are compiled, not imagined** — every Mermaid diagram is
+1. **Diagrams are compiled, not imagined** - every Mermaid diagram is
    generated from real edges. An LLM never draws an arrow.
-2. **Claims are verified before publish** — a checker validates every cited
+2. **Claims are verified before publish** - a checker validates every cited
    symbol, location, and relationship in a draft section against the graph;
    failed claims are regenerated or dropped. Docs that show their work.
-3. **Docs are versioned and stale-proof** — pages hang off immutable
+3. **Docs are versioned and stale-proof** - pages hang off immutable
    snapshots; the structural diff identifies exactly which sections
    reference changed symbols, so regeneration is section-level and
    automatic, and every page says which commit it describes.
-4. **Private/air-gapped first** — local LLM + pgvector + self-hosted; code
+4. **Private/air-gapped first** - local LLM + pgvector + self-hosted; code
    never leaves unless an org opts into a cloud provider.
-5. **Personas from one set of facts** — new-engineer, architect, on-call,
+5. **Personas from one set of facts** - new-engineer, architect, on-call,
    security views are different traversals + templates over the same graph,
    never divergent prose sources.
 
@@ -719,17 +719,17 @@ outline (deterministic) → synthesize (grounded LLM) → verify (graph check)
       → persist + embed → publish        …later: diff → section-level regen
 ```
 
-1. **Outline — no LLM.** The doc tree is computed from the graph: overview,
+1. **Outline - no LLM.** The doc tree is computed from the graph: overview,
    architecture (module graph + cycles), one page per major module (by LOC/
    traffic), entry-points page, hotspots page, persona-specific extras. The
    *structure* of the wiki is a fact, not a guess.
-2. **Synthesize — grounded.** Per section, the writer agent receives (a) the
-   section's graph facts (exports, deps, callers, entry points — from the
+2. **Synthesize - grounded.** Per section, the writer agent receives (a) the
+   section's graph facts (exports, deps, callers, entry points - from the
    existing tool layer), (b) relevant source slices, (c) the persona
    template. It writes markdown; **diagram slots are filled by the server**
    from `/export/mermaid`-style queries scoped to the section, never by the
    model. Citations use a strict `[sym:stable_symbol]` / `path:line` form.
-3. **Verify — the moat.** A checker parses every citation and structural
+3. **Verify - the moat.** A checker parses every citation and structural
    claim marker in the draft and validates it against the graph (symbol
    exists, edge exists, location matches). Sections with failures get one
    regeneration with the errors attached (the ask-loop correction pattern,
@@ -739,17 +739,17 @@ outline (deterministic) → synthesize (grounded LLM) → verify (graph check)
    they cite) into pgvector.
 5. **Staleness (the Swimm killer).** On a new snapshot: structural diff →
    changed stable_symbols → join `doc_refs` → affected sections flagged
-   `stale` and queued for regeneration. Everything else is reused verbatim —
+   `stale` and queued for regeneration. Everything else is reused verbatim -
    this is also the cost model: **you pay LLM tokens proportional to the
    diff, not the repo.**
 
 ### 18.4 Serving & RAG chat
 
-- Portal: a **Docs** tab — persona switcher, page tree, rendered markdown
+- Portal: a **Docs** tab - persona switcher, page tree, rendered markdown
   (mermaid rendered client-side), every section footed with its citations
   and "describes commit `abc123`".
 - Chat: the existing Ask loop gains a `search_docs` tool (pgvector top-k
-  over doc+code chunks). **Hybrid grounding** — the model retrieves prose
+  over doc+code chunks). **Hybrid grounding** - the model retrieves prose
   context semantically AND verifies structure through graph tools; answers
   cite both page anchors and file:line. Pure-RAG competitors have only the
   first half.
@@ -770,14 +770,14 @@ outline (deterministic) → synthesize (grounded LLM) → verify (graph check)
 
 ### 18.6 Risks
 
-- **Token economics** — mitigated structurally by section-level regen, but
+- **Token economics** - mitigated structurally by section-level regen, but
   D0 must measure real cost/page before committing to big repos.
-- **Prose quality** — grounding prevents lies, not blandness; persona
+- **Prose quality** - grounding prevents lies, not blandness; persona
   templates and the editorial layer (D2) are the lever.
-- **DeepWiki's free public tier** is unbeatable on price for OSS — do not
+- **DeepWiki's free public tier** is unbeatable on price for OSS - do not
   compete there; the buyer is private/regulated teams (the §10/§11
   local-first posture is the moat they pay for).
-- **Verification coverage** — the checker validates structural claims, not
+- **Verification coverage** - the checker validates structural claims, not
   every English sentence; scope honestly (citations, diagrams, dependency
   claims) and label the rest as narrative.
 

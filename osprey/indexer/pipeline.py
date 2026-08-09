@@ -66,7 +66,7 @@ def _python_requirements(repo: Path) -> list[str]:
 def install_deps(repo: Path, executor, workdir: Path,
                  in_container: bool) -> None:
     """Deps stage (`proxied` mode). Package scripts never run: npm gets
-    --ignore-scripts, pip gets --only-binary :all: (wheels only — no sdist
+    --ignore-scripts, pip gets --only-binary :all: (wheels only - no sdist
     builds, so no setup.py execution). Python installs are per-requirement
     best-effort; misses degrade that package to external-stub resolution."""
     if (repo / "package.json").exists():

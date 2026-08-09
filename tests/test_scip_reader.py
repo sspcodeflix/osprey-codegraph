@@ -1,4 +1,4 @@
-"""Symbol-grammar tests — every rule here is an M0-measured fact about real
+"""Symbol-grammar tests - every rule here is an M0-measured fact about real
 indexer output, not spec reading."""
 
 from osprey.scip import reader as R

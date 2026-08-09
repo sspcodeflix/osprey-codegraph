@@ -1,6 +1,6 @@
 """LLM provider shim for the Ask feature (ARCHITECTURE.md §10).
 
-Local-first: Ollama is the default and runs entirely on this machine — no
+Local-first: Ollama is the default and runs entirely on this machine - no
 code leaves the network. Anthropic is the cloud opt-in, active only when a
 key is configured. Both speak one tiny interface: chat(messages, tools) ->
 text or tool calls. The model never sees the database, only the typed tools.
@@ -64,7 +64,7 @@ class OllamaProvider:
 
 class AnthropicProvider:
     """Cloud opt-in: requires OSPREY_ANTHROPIC_API_KEY. Sends code excerpts
-    to Anthropic — deployments must surface that choice to the org."""
+    to Anthropic - deployments must surface that choice to the org."""
 
     def __init__(self, model: str | None = None):
         if not settings.anthropic_api_key:

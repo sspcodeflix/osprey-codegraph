@@ -1,4 +1,4 @@
--- Osprey M0 schema — faithful subset of ARCHITECTURE.md §4
+-- Osprey M0 schema - faithful subset of ARCHITECTURE.md §4
 -- (single org/repo implied; staging/publish flow skipped for the spike)
 
 DROP TABLE IF EXISTS edges, occurrences, symbols, files, snapshots CASCADE;

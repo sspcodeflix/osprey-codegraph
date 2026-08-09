@@ -132,7 +132,7 @@ export default function App() {
     // demo instances never trigger generation: the operator does
     if (snapId == null || user?.demo) return
     api.docsTree(snapId, p).then((t) => {
-      if (t.length > 0) return   // already written — just open them
+      if (t.length > 0) return   // already written - just open them
       return api.docsGenerate(snapId, p).then(() => {
         setDocsJob({ snap: snapId, persona: p, repo, status: "writing" })
         const poll = () => {

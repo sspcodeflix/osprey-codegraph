@@ -4,7 +4,7 @@ tools -> tools hit the query API -> answer with citations.
 The model never writes queries; it fills validated arguments on a fixed tool
 menu. Tools are pre-bound to the active snapshot so a small local model
 juggles one or two arguments, not repo/ref bookkeeping. Every call lands in
-the trace shown to the user — a chat answer is auditable evidence, not vibes.
+the trace shown to the user - a chat answer is auditable evidence, not vibes.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ def _get(path: str, **params):
                                timeout=30)
     res = _client.get(path, params=params or None)
     if res.status_code >= 400:
-        # surface the API's own explanation to the model — a 404 with
+        # surface the API's own explanation to the model - a 404 with
         # "use symbol search first" is corrective feedback it can act on
         detail = res.json().get("detail", res.text[:200]) \
             if res.headers.get("content-type", "").startswith(
@@ -226,7 +226,7 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
             key = (call.name, json.dumps(call.arguments, sort_keys=True))
             if key in seen_calls:
                 # the model is repeating itself (observed: 29 identical
-                # searches) — return the prior result and tell it to move on
+                # searches) - return the prior result and tell it to move on
                 result = {"note": "you already ran this exact call; use the "
                           "earlier result and either try a DIFFERENT tool or "
                           "give your final answer now", "result": seen_calls[key]}
@@ -237,7 +237,7 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
                 else:
                     try:
                         result = fn(**call.arguments)
-                    except Exception as exc:  # noqa: BLE001 — surface to model
+                    except Exception as exc:  # noqa: BLE001 - surface to model
                         result = {"error": str(exc)[:300]}
                 seen_calls[key] = result
             trace.append({"tool": call.name, "args": call.arguments})
@@ -259,5 +259,5 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
     answer = text or ("I couldn't find enough in the graph to answer "
                       "that - try naming a specific function or file.")
     # house style: no em-dashes in anything shown to the user
-    answer = answer.replace(" — ", " - ").replace("—", " - ").replace("–", "-")
+    answer = answer.replace(" - ", " - ").replace("-", " - ").replace("-", "-")
     return {"answer": answer, "trace": trace}

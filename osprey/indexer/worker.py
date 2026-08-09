@@ -69,7 +69,7 @@ def _run_docs_job(repo_root: Path, name: str, git_url: str,
         source_root = _source_root_for_snapshot(
             repo_root, name, git_url, snapshot_id, Path(td))
         stats = generate_docs(snapshot_id, persona, source_root)
-    # persist generation economics on the job — D0's exit metric
+    # persist generation economics on the job - D0's exit metric
     with psycopg.connect(settings.db_dsn) as conn:
         conn.execute(
             "UPDATE jobs SET payload = payload || %s::jsonb WHERE id=%s",
@@ -119,7 +119,7 @@ def run_worker(repo_root: Path, once: bool = False) -> None:
                 else:
                     snapshot_id = _run_job(repo_root, name, git_url or "",
                                            ref)
-                    # remember which tag/branch produced this snapshot —
+                    # remember which tag/branch produced this snapshot -
                     # commit_sha alone is meaningless to most readers
                     conn.execute(
                         "UPDATE snapshots SET stats = stats || %s"
@@ -149,7 +149,7 @@ def run_worker(repo_root: Path, once: bool = False) -> None:
                 conn.execute("UPDATE jobs SET status='done' WHERE id=%s",
                              (job_id,))
                 print(f"job {job_id}: {outcome}")
-            except Exception as exc:  # noqa: BLE001 — job isolation boundary
+            except Exception as exc:  # noqa: BLE001 - job isolation boundary
                 conn.execute(
                     "UPDATE jobs SET status='failed', error=%s WHERE id=%s",
                     (str(exc)[:4000], job_id))

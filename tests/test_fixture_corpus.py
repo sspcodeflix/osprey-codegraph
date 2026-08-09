@@ -1,5 +1,5 @@
 """Fixture corpus harvested from code-graph-rag's test suite (MIT, © vitali87
-and contributors — patterns adapted, not copied code). Each case is a
+and contributors - patterns adapted, not copied code). Each case is a
 real-world shape their years of testing proved matters; here they pin the
 classifier behaviors that Osprey's dead-code and CALLS-trust stories rest on.
 """
@@ -22,7 +22,7 @@ class TestBoundFunctionHandoff:
     f = FileFacts(BIND, "typescript")
 
     def test_bound_function_is_not_a_call(self):
-        # handleError in `handleError.bind(x)` must be REFERENCES — it is the
+        # handleError in `handleError.bind(x)` must be REFERENCES - it is the
         # object of the member expression, not the callee. Misclassifying it
         # CALLS would be wrong; missing it entirely reports it dead.
         assert not self.f.is_call_position(3, 31)      # handleError
@@ -76,7 +76,7 @@ class TestJsxComponentReference:
     f = FileFacts(JSX, "tsx")
 
     def test_component_usage_is_not_a_call(self):
-        # <Header /> hands the component to the JSX runtime — REFERENCES.
+        # <Header /> hands the component to the JSX runtime - REFERENCES.
         # Components misread as never-called is the classic dead-code false
         # positive their suite guards against.
         assert not self.f.is_call_position(3, 10)      # <Header

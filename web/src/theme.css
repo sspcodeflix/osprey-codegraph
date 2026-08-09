@@ -20,7 +20,7 @@
   --danger-dim: rgba(240, 85, 90, 0.15);
   /* categorical series (validated on #1a2038): edge kinds stay distinct */
   --series-1: #3987e5;       /* CALLS */
-  --series-2: #f0555a;       /* selection / root / heat — the risk red */
+  --series-2: #f0555a;       /* selection / root / heat - the risk red */
   --series-3: #199e70;       /* IMPORTS */
   --series-7: #9085e9;       /* INHERITS */
   --external: #4a5170;

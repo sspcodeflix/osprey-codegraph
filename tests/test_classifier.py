@@ -1,5 +1,5 @@
 """Classifier regression tests. Every case here was discovered against real
-code in M0 (m0/REPORT.md) — these are the cases that decide whether CALLS
+code in M0 (m0/REPORT.md) - these are the cases that decide whether CALLS
 edges can be trusted.
 """
 
@@ -93,7 +93,7 @@ class TestTypeScript:
         assert not self.f.is_call_position(10, 39)
 
     def test_private_method_call(self):
-        # this.#dispatch(req): private_property_identifier (M0 finding —
+        # this.#dispatch(req): private_property_identifier (M0 finding -
         # missing this node type silently degraded CALLS to REFERENCES)
         assert self.f.is_call_position(13, 16)
 

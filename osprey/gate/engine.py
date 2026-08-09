@@ -1,4 +1,4 @@
-"""Gate evaluation (ARCHITECTURE.md §8): pure functions over API payloads —
+"""Gate evaluation (ARCHITECTURE.md §8): pure functions over API payloads -
 no HTTP in here, so every behavior is unit-testable.
 """
 
@@ -40,7 +40,7 @@ def _check_deny(rules: Rules, edges: list[ModuleEdge],
                 fetch_sites: SitesFetch | None) -> list[Violation]:
     out: list[Violation] = []
     for rule in rules.deny:
-        # one violation per offending module pair, kinds aggregated —
+        # one violation per offending module pair, kinds aggregated -
         # IMPORTS + CALLS across the same boundary is one problem, not two
         by_pair: dict[tuple[str, str], list[ModuleEdge]] = {}
         for e in edges:

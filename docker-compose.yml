@@ -1,4 +1,4 @@
-# Osprey — single-node deployment (ARCHITECTURE.md §13).
+# Osprey - single-node deployment (ARCHITECTURE.md §13).
 #
 #   docker compose up -d          # db + api + worker
 #   docker compose --profile local-chat up -d    # …plus bundled Ollama

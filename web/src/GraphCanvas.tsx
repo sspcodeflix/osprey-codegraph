@@ -26,7 +26,7 @@ export function GraphCanvas({ graph, onNodeClick, onNodeDoubleClick,
 
   useEffect(() => {
     if (!ref.current || !graph) return
-    // sigma's default hover drawer paints a WHITE pill behind the label —
+    // sigma's default hover drawer paints a WHITE pill behind the label -
     // invisible with our white label text on the dark theme. Draw our own:
     // dark pill, accent border, light text.
     const drawNodeHover = (ctx: CanvasRenderingContext2D, data: {

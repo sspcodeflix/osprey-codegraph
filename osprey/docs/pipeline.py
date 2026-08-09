@@ -288,7 +288,7 @@ def _source_slices(source_root: Path | None, facts: dict) -> str:
 # --------------------------------------------------------------- diagrams
 
 def _diagram(conn, snap: int, spec: PageSpec) -> str | None:
-    """Mermaid compiled from real edges — the LLM never draws an arrow."""
+    """Mermaid compiled from real edges - the LLM never draws an arrow."""
     if spec.kind == "module" and spec.module is not None:
         rows = conn.execute("""
             SELECT src_module, dst_module, weight FROM module_edges
@@ -428,7 +428,7 @@ PERSONAS: dict[str, dict] = {
 def _no_em_dashes(md: str) -> str:
     """House style bans em/en-dashes; enforce it even when the model
     ignores the prompt rule."""
-    return md.replace(" — ", " - ").replace("—", " - ").replace("–", "-")
+    return md.replace(" - ", " - ").replace("-", " - ").replace("-", "-")
 
 
 def synthesize_page(provider, conn, snap: int, spec: PageSpec, repo: str,
@@ -548,7 +548,7 @@ def _embed_texts(texts: list[str]) -> list[list[float]] | None:
             "model": "nomic-embed-text", "input": texts}, timeout=120)
         res.raise_for_status()
         return res.json()["embeddings"]
-    except Exception:  # noqa: BLE001 — embeddings are optional
+    except Exception:  # noqa: BLE001 - embeddings are optional
         return None
 
 

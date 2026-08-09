@@ -49,5 +49,5 @@ def test_all_tools_registered():
         "get_callees", "blast_radius", "module_graph", "find_cycles",
         "edge_evidence", "structural_diff", "dead_code",
     }
-    # every tool must carry a docstring — it IS the model-facing contract
+    # every tool must carry a docstring - it IS the model-facing contract
     assert all(t.description for t in tools)

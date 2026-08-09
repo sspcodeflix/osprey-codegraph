@@ -32,7 +32,7 @@ TYPESCRIPT = Grammar(
                     "abstract_class_declaration"}),
     class_defs=frozenset({"class_declaration", "abstract_class_declaration"}),
     imports=frozenset({"import_statement"}),
-    # private_property_identifier: this.#method() calls (M0 finding — absent
+    # private_property_identifier: this.#method() calls (M0 finding - absent
     # from the set, private-method calls silently degrade to REFERENCES)
     idents=frozenset({"identifier", "property_identifier", "type_identifier",
                       "private_property_identifier"}),

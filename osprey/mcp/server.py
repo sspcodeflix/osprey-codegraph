@@ -1,10 +1,10 @@
 """osprey-mcp: the graph as typed MCP tools (ARCHITECTURE.md §10).
 
-The model selects tools and fills validated arguments — it never generates
+The model selects tools and fills validated arguments - it never generates
 SQL or Cypher. Every tool wraps a query-API endpoint 1:1, so auth, audit,
 read-only enforcement, and cost caps all stay server-side. Every result
 carries provenance: the snapshot id + commit it came from, and file:line on
-each row. Results are capped — an agent context is a budget, not a dump site.
+each row. Results are capped - an agent context is a budget, not a dump site.
 
 Config: OSPREY_API_URL (default http://127.0.0.1:8800), OSPREY_API_TOKEN.
 Run: `osprey-mcp` (stdio transport).

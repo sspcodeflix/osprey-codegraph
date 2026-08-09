@@ -1,6 +1,6 @@
 """Execution backends for indexer stages (ARCHITECTURE.md §11.1).
 
-LocalExecutor runs tools on the host — for trusted repos and dev loops.
+LocalExecutor runs tools on the host - for trusted repos and dev loops.
 ContainerExecutor runs each stage in a rootless-friendly container:
   - the index stage always gets --network=none
   - the deps stage (proxied mode only) gets network egress
@@ -27,7 +27,7 @@ class ExecResult:
 
 
 class LocalExecutor:
-    """Direct subprocess execution. No isolation — trusted input only."""
+    """Direct subprocess execution. No isolation - trusted input only."""
 
     def run(self, cmd: str, cwd: Path, timeout_s: int,
             args: list[str] | None = None, *, network: bool = True,

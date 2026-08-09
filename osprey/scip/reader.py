@@ -75,7 +75,7 @@ def name_from_symbol(sym: str) -> str:
         mod = d.rsplit("/", 1)[0] if "/" in d else d[: -len("__init__:")]
         return mod.replace("`", "")
     if d.endswith("/"):
-        # namespace descriptors quote path segments (`src/utils/`url.ts`/) —
+        # namespace descriptors quote path segments (`src/utils/`url.ts`/) -
         # backticks are grammar, not name
         return d[:-1].replace("`", "")
     tail = d.rsplit("/", 1)[-1]

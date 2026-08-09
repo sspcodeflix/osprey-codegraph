@@ -67,7 +67,7 @@ def db(authorization: Annotated[str | None, Header()] = None):
 
 
 def audit(conn, actor: str, action: str) -> None:
-    # separate autocommit write path — the request transaction is READ ONLY
+    # separate autocommit write path - the request transaction is READ ONLY
     with pool.connection() as w:
         w.execute("INSERT INTO audit_log (org_id, actor, action)"
                   " SELECT id, %s, %s FROM orgs WHERE name='default'",
@@ -142,7 +142,7 @@ ORDER BY w.id, w.depth
 
 
 def require_symbol(conn, snap: int, symbol_id: int) -> None:
-    # a nonexistent id must be a loud 404, not an empty result — an AI (or
+    # a nonexistent id must be a loud 404, not an empty result - an AI (or
     # script) that invented an id would otherwise read silence as "no
     # callers" and report a confident false negative
     row = conn.execute(
@@ -215,7 +215,7 @@ def impact(snap: int, symbol_id: int, depth: int = 3, conn=Depends(db)):
 @app.get("/v1/snapshots/{snap}/subgraph", response_model=M.SubgraphOut)
 def subgraph(snap: int, root: int, hops: int = 2, conn=Depends(db)):
     """Bounded bidirectional neighborhood for visualization: nodes + the
-    edges among them, server-extracted (§9 — the client never gets the full
+    edges among them, server-extracted (§9 - the client never gets the full
     graph)."""
     ready_snapshot(conn, snap)
     audit(conn, "api", f"subgraph?root={root}&hops={hops}")
@@ -253,7 +253,7 @@ def subgraph(snap: int, root: int, hops: int = 2, conn=Depends(db)):
 def sequence(snap: int, symbol_id: int, depth: int = 3,
              max_steps: int = Query(30, le=80), conn=Depends(db)):
     """Approximate execution sequence from a starting function: a DFS over
-    CALLS edges, children ordered by call-site line — so the order mirrors
+    CALLS edges, children ordered by call-site line - so the order mirrors
     the source. Rendered as a mermaid sequenceDiagram, compiled from real
     edges like every Osprey diagram."""
     ready_snapshot(conn, snap)
@@ -341,7 +341,7 @@ def sequence(snap: int, symbol_id: int, depth: int = 3,
 
 @app.get("/v1/snapshots/{snap}/endpoints", response_model=list[M.EndpointOut])
 def endpoints(snap: int, conn=Depends(db)):
-    """Detected entry points — HTTP route handlers, CLI commands, and main
+    """Detected entry points - HTTP route handlers, CLI commands, and main
     guards (§8.3). The answer to 'where are the endpoints / how are they
     registered'."""
     ready_snapshot(conn, snap)
@@ -600,7 +600,7 @@ def _module_graph_for_export(conn, snap: int, limit: int = 500):
 
 @app.get("/v1/snapshots/{snap}/export/graphml")
 def export_graphml(snap: int, conn=Depends(db)):
-    """Module graph as GraphML — opens in Gephi, yEd, Cytoscape."""
+    """Module graph as GraphML - opens in Gephi, yEd, Cytoscape."""
     from xml.sax.saxutils import escape
 
     from fastapi.responses import Response
@@ -637,7 +637,7 @@ def export_graphml(snap: int, conn=Depends(db)):
 @app.get("/v1/snapshots/{snap}/export/mermaid")
 def export_mermaid(snap: int, kind: str = "CALLS",
                    limit: int = Query(60, le=200), conn=Depends(db)):
-    """Module graph as a Mermaid flowchart — paste into READMEs, wikis, PRs."""
+    """Module graph as a Mermaid flowchart - paste into READMEs, wikis, PRs."""
     from fastapi.responses import PlainTextResponse
     ready_snapshot(conn, snap)
     audit(conn, "api", "export/mermaid")
@@ -849,7 +849,7 @@ def docs_generate(body: M.DocsGenerateIn,
 def docs_search(snap: int, q: str = Query(min_length=2),
                 limit: int = Query(5, le=20), conn=Depends(db)):
     """Semantic search over generated docs (pgvector). Complements the
-    structural tools — prose recall + graph precision."""
+    structural tools - prose recall + graph precision."""
     ready_snapshot(conn, snap)
     import httpx as _httpx
     import json as _json
@@ -873,7 +873,7 @@ def docs_search(snap: int, q: str = Query(min_length=2),
 @app.post("/v1/ask", response_model=M.AskOut)
 def ask(body: M.AskIn, conn=Depends(db)):
     """English questions over the graph. The model only uses the typed tool
-    menu (§10) — every claim in the answer is backed by a traced tool call."""
+    menu (§10) - every claim in the answer is backed by a traced tool call."""
     snap = conn.execute(
         "SELECT s.id, s.commit_sha, r.name AS repo FROM snapshots s"
         " JOIN repos r ON r.id = s.repo_id"
@@ -888,7 +888,7 @@ def ask(body: M.AskIn, conn=Depends(db)):
                        body.question,
                        [m.model_dump() for m in body.history[-8:]],
                        context=body.context)
-    except Exception as exc:  # noqa: BLE001 — surface provider problems
+    except Exception as exc:  # noqa: BLE001 - surface provider problems
         raise HTTPException(
             502, f"chat provider unavailable: {str(exc)[:200]}") from exc
 
@@ -954,7 +954,7 @@ def diff(base: int, head: int, conn=Depends(db)):
     }
 
 
-# serve the built UI (osprey/web/dist) from the API origin when present —
+# serve the built UI (osprey/web/dist) from the API origin when present -
 # single-process deployment, no separate web server needed
 from pathlib import Path as _Path  # noqa: E402
 
