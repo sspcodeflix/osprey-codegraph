@@ -129,6 +129,43 @@ osprey-gate check --repo myrepo --base previous --head latest \
 Violations come with evidence (`file:line` of the offending import or
 call). The gate fails open by default; `--fail-closed` inverts that.
 
+## Use Osprey from your IDE (MCP)
+
+Osprey ships an [MCP](https://modelcontextprotocol.io) server that exposes
+the graph as typed tools, so an AI assistant in your editor can answer
+"who calls this", "what breaks if I change it", "where are the cycles"
+with **verified** results instead of guesses. The model selects tools and
+fills validated arguments; it never writes a query.
+
+The server (`osprey-mcp`) talks to a running Osprey API over
+`OSPREY_API_URL` (and `OSPREY_API_TOKEN` if the API requires one). Point
+your assistant at it:
+
+**Claude Code / Claude Desktop** — add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "osprey": {
+      "command": "/path/to/osprey/.venv/bin/osprey-mcp",
+      "env": {
+        "OSPREY_API_URL": "http://127.0.0.1:8800",
+        "OSPREY_API_TOKEN": "your-token-if-set"
+      }
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`) and **VS Code Copilot agent mode**
+(`.vscode/mcp.json`) use the same shape. After registering, ask your
+assistant a question about an indexed repo and it will call Osprey's
+tools; results are capped and carry `file:line` provenance.
+
+Tools available: `list_repos`, `list_snapshots`, `search_symbols`,
+`get_callers`, `get_callees`, `blast_radius`, `module_graph`,
+`find_cycles`, `edge_evidence`, `structural_diff`, `dead_code`.
+
 ## Configuration
 
 All settings are environment variables prefixed `OSPREY_` (or an `.env`
