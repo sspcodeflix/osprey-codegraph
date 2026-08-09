@@ -9,8 +9,8 @@
   --surface-1: #1a2038;      /* panels */
   --surface-2: #242b4a;      /* insets, hover, bubbles */
   --text-primary: #eef0fb;
-  --text-secondary: #a3aacb;
-  --text-muted: #737a9e;
+  --text-secondary: #c2c7ea;   /* was #a3aacb: lifted for readability */
+  --text-muted: #9ea3cc;       /* was #737a9e (3.8:1, below AA); now 6.5:1 */
   --border: #2c3254;
   --accent: #7269ef;         /* chrome purple */
   --accent-hover: #8f88ff;
@@ -37,8 +37,16 @@ body {
   margin: 0;
   background: var(--surface-0);
   color: var(--text-primary);
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  /* crisper glyph edges on the dark surface */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+/* native placeholders render at reduced opacity by default: pin them to
+   the (now readable) muted token so hints aren't double-dimmed */
+::placeholder { color: var(--text-muted); opacity: 1; }
 #root { height: 100vh; }
 .shell { display: flex; height: 100vh; }
 .sidenav { width: 216px; flex: none; background: var(--surface-1);
@@ -249,32 +257,61 @@ button.hirow:hover .hi-label { color: var(--accent-hover); }
   border-radius: 8px; padding: 5px 11px; font: inherit; font-size: 12.5px;
   color: var(--text-primary); width: 180px;
 }
-table.htable { width: 100%; border-collapse: collapse; margin-top: 4px; }
-table.htable th {
-  text-align: left; font-size: 11.5px; font-weight: 600;
-  color: var(--text-secondary); text-transform: uppercase;
-  letter-spacing: 0.4px; padding: 7px 10px;
-  border-bottom: 1px solid var(--border);
+/* card-head with an icon + title cluster */
+.head-title { display: flex; align-items: center; gap: 9px; }
+.head-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px; flex: none;
+  color: var(--danger); background: var(--danger-dim);
 }
-table.htable td {
-  padding: 9px 10px; border-bottom: 1px solid var(--border);
-  vertical-align: middle;
+
+/* ranked leaderboard (Most depended-on code) */
+.ranklist { list-style: none; margin: 8px 0 0; padding: 0;
+  display: flex; flex-direction: column; }
+.rankrow {
+  display: grid; align-items: center; gap: 14px;
+  grid-template-columns: 26px minmax(0, 1fr) auto minmax(120px, 34%);
+  padding: 10px 10px; border-radius: 10px; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: background .12s;
 }
-table.htable tbody tr { cursor: pointer; }
-table.htable tbody tr:hover { background: var(--surface-2); }
-table.htable tbody tr:last-child td { border-bottom: none; }
-.cell-main { font-weight: 600; font-size: 13px; }
-.cell-sub {
-  color: var(--text-muted); font-size: 11.5px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; max-width: 320px;
+.rankrow:last-child { border-bottom: none; }
+.rankrow:hover { background: var(--surface-2); }
+.rank {
+  font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700;
+  color: var(--text-muted); text-align: center;
+}
+.rank.top { color: var(--danger); }
+.rankmain { min-width: 0; }
+.rankname {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rankpath {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px; color: var(--text-muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
 }
 .kindchip {
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: 999px; padding: 2px 10px; font-size: 11.5px;
-  color: var(--text-secondary);
+  justify-self: start; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px;
+  letter-spacing: 0.3px; color: var(--text-secondary);
 }
-.cellbar { display: flex; align-items: center; gap: 8px; }
-.cellbar .hbar-track { flex: 1; }
+.rankmeter { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rankbar {
+  flex: 1; height: 6px; border-radius: 4px; background: var(--surface-2);
+  overflow: hidden;
+}
+.rankfill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--seq-4), var(--danger));
+}
+.rankcount {
+  font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700;
+  color: var(--text-primary); white-space: nowrap;
+}
+.rankunit { font-size: 11px; font-weight: 500; color: var(--text-muted); }
 
 /* proportion bar: 2px surface gaps between segments, rounded data-ends */
 .propbar {
@@ -330,8 +367,14 @@ table.htable tbody tr:last-child td { border-bottom: none; }
 .repo-block {
   display: flex; flex-direction: column; gap: 6px; margin: 2px 12px 12px;
 }
-.repo-block select { width: 100%; }
-.repo-block .snapline { padding-left: 2px; }
+.repo-block select {
+  width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; padding-right: 26px;   /* room for the native arrow */
+}
+.repo-block .snapline {
+  padding-left: 2px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Overview drill-in header */
 .backbar {

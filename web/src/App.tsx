@@ -268,20 +268,18 @@ export default function App() {
             {snapshots.length > 1 ? (
               <select value={snap ?? ""}
                       onChange={(e) => setSnap(Number(e.target.value))}
-                      title="Which analyzed version">
+                      title="Which analyzed version (commit, tag/branch, date)">
                 {snapshots.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.commit_sha.slice(0, 7)}
-                    {refOf(s) ? ` · ${refOf(s)}` : ""} · {fmtDate(s.created_at)}
+                    {refOf(s) ?? s.commit_sha.slice(0, 7)} · {fmtDate(s.created_at)}
                   </option>
                 ))}
               </select>
             ) : snapshots[0] && (
               <span className="muted small snapline"
-                    title="the analyzed version: commit and date">
-                {snapshots[0].commit_sha.slice(0, 7)}
-                {refOf(snapshots[0]) ? ` · ${refOf(snapshots[0])}` : ""} ·{" "}
-                {fmtDate(snapshots[0].created_at)}
+                    title={`${snapshots[0].commit_sha.slice(0, 7)} · analyzed ${fmtDate(snapshots[0].created_at)}`}>
+                {refOf(snapshots[0]) ?? snapshots[0].commit_sha.slice(0, 7)}
+                {" · "}{fmtDate(snapshots[0].created_at)}
               </span>
             )}
           </div>

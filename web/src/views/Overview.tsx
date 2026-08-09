@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { api, Hotspot, Overview as Ov } from "../api"
+import { FlameIcon } from "../icons"
 
 // categorical hues for the language bar — fixed order, dark-validated
 // (dataviz six-checks vs #1a2038); >3 languages fold into a neutral "other"
@@ -108,43 +109,41 @@ export function Overview({ snap, prevSnap, onNavigate, onPickHotspot }: {
 
           <div className="card">
             <div className="card-head">
-              <h3>🔥 Most depended-on code</h3>
+              <div className="head-title">
+                <span className="head-ico"><FlameIcon /></span>
+                <h3>Most depended-on code</h3>
+              </div>
               <input className="tablesearch" placeholder="Filter symbols"
                      value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
-            <p className="muted">Changes here ripple widest: click one to see
-              its blast radius.</p>
-            <table className="htable">
-              <thead>
-                <tr><th>Symbol</th><th>Kind</th><th style={{ width: "38%" }}>
-                  Callers</th></tr>
-              </thead>
-              <tbody>
-                {hotspots.slice(0, 8).map((h) => (
-                  <tr key={h.symbol_id} onClick={() => onPickHotspot(h)}>
-                    <td>
-                      <div className="cell-main">{h.name}</div>
-                      <div className="cell-sub">{h.path}{h.line != null
-                        ? `:${h.line}` : ""}</div>
-                    </td>
-                    <td><span className="kindchip">{h.kind}</span></td>
-                    <td>
-                      <span className="cellbar">
-                        <span className="hbar-track"><span className="hbar-fill"
-                          style={{
-                            width: `${Math.max(2, (h.inbound / maxIn) * 100)}%`,
-                            background: "var(--series-2)",
-                          }} /></span>
-                        <span className="hbar-value">{h.inbound}</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="muted">Changes here ripple widest. Click a row to
+              see its blast radius.</p>
+            <ol className="ranklist">
+              {hotspots.slice(0, 8).map((h, i) => (
+                <li key={h.symbol_id} className="rankrow"
+                    onClick={() => onPickHotspot(h)}>
+                  <span className={`rank ${i === 0 ? "top" : ""}`}>{i + 1}</span>
+                  <div className="rankmain">
+                    <div className="rankname">{h.name}</div>
+                    <div className="rankpath">{h.path}{h.line != null
+                      ? `:${h.line}` : ""}</div>
+                  </div>
+                  <span className="kindchip">{h.kind}</span>
+                  <div className="rankmeter">
+                    <div className="rankbar">
+                      <div className="rankfill" style={{
+                        width: `${Math.max(3, (h.inbound / maxIn) * 100)}%`,
+                      }} />
+                    </div>
+                    <span className="rankcount">{h.inbound.toLocaleString()}
+                      <span className="rankunit"> callers</span></span>
+                  </div>
+                </li>
+              ))}
+            </ol>
             <div className="card-foot muted">
-              {Math.min(8, hotspots.length)} of {data.hotspots.length} widest
-              blast radii{query && ` matching “${query}”`}
+              Top {Math.min(8, hotspots.length)} of {data.hotspots.length} by
+              caller count{query && ` matching “${query}”`}
             </div>
           </div>
         </div>
