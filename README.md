@@ -268,6 +268,7 @@ osprey/
 │   └── scip/          #   SCIP protobuf reader
 ├── web/               # React + Sigma.js UI
 ├── deploy/            # Dockerfiles + compose.demo.yml overlay
+├── examples/          # CI workflow: index-on-merge docs refresh
 ├── tests/
 ├── SECURITY.md        # trust boundaries + operator checklist
 └── ARCHITECTURE.md    # full design, schema, decision log

@@ -67,6 +67,7 @@ body {
 .wordmark {
   font-size: 20px; font-weight: 800; letter-spacing: -0.3px; line-height: 1;
 }
+.brandmark.cta { width: 52px; height: 52px; border-radius: 15px; }
 
 /* collapsible sidebar: slide it out, main content reclaims the width */
 .sidenav { transition: margin-left .18s ease; }
@@ -447,7 +448,6 @@ button.hirow:hover .hi-label { color: var(--accent-hover); }
   border-radius: 16px; padding: 40px 44px;
   display: flex; flex-direction: column; gap: 10px; align-items: center;
 }
-.cta-icon { font-size: 44px; }
 .cta-card h2 { margin: 0; font-size: 19px; }
 .cta-card p { margin: 0; }
 button.primary {

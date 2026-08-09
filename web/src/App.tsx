@@ -254,7 +254,7 @@ export default function App() {
   if (needsLogin) {
     return (
       <div className="cta-card">
-        <div className="cta-icon">🦅</div>
+        <span className="brandmark cta"><LogoMark size={26} /></span>
         <h2><span className="brand">Osprey</span> demo</h2>
         <p className="muted">Enter your access code to explore. Don't have
           one yet? Request access and we'll send you an invite.</p>
@@ -429,7 +429,7 @@ export default function App() {
               {error && <div className="error">{error}</div>}
               {snap == null
                 ? <div className="cta-card">
-                    <div className="cta-icon">🦅</div>
+                    <span className="brandmark cta"><LogoMark size={26} /></span>
                     <h2>Understand any codebase in minutes</h2>
                     <p className="muted">Paste a repository URL and Osprey maps
                       its structure, finds the risks, and writes grounded
