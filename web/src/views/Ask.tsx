@@ -73,8 +73,8 @@ export function Ask({ snap, focusName }: {
             <div className="bubble">
               {m.role === "assistant" ? (
                 <div className="md">
-                  {/* react-markdown renders no raw HTML by default → safe */}
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {/* no raw HTML (skipHtml) + default URL sanitization */}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
                     {m.content}
                   </ReactMarkdown>
                 </div>

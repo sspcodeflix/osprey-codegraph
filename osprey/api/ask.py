@@ -191,10 +191,18 @@ def run_ask(snap: int, repo: str, commit: str, question: str,
             history: list[dict]) -> dict:
     provider = get_provider()
     tools = make_tools(snap)
+    # defense in depth: only user/assistant turns are ever replayed, so a
+    # caller cannot smuggle a 'system' turn to override the scope guardrail
+    # or fabricate 'tool' results, regardless of how history was built
+    safe_history = [
+        {"role": m["role"], "content": str(m["content"])[:8000]}
+        for m in (history or [])[-8:]
+        if isinstance(m, dict) and m.get("role") in ("user", "assistant")
+    ]
     messages = [
         {"role": "system",
          "content": SYSTEM.format(repo=repo, commit=commit[:8])},
-        *[{"role": m["role"], "content": m["content"]} for m in history],
+        *safe_history,
         {"role": "user", "content": question},
     ]
     trace: list[dict] = []

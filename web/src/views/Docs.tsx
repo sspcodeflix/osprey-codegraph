@@ -117,7 +117,8 @@ export function Docs({ snap, persona, generating, onPersona, demo }: {
                   : <span className="pill">draft</span>}
               </div>
               <div className="md">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml
+                  components={{
                   code({ className, children, ...props }) {
                     const text = String(children ?? "")
                     if (className?.includes("language-mermaid")) {

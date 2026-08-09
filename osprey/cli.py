@@ -56,13 +56,16 @@ def main(argv: list[str] | None = None) -> None:
         print("schema applied")
     elif args.cmd == "index":
         from osprey.indexer.pipeline import index_repository
-        snapshot_id = index_repository(args.path, args.name,
+        from osprey.names import safe_repo_name
+        snapshot_id = index_repository(args.path, safe_repo_name(args.name),
                                        deps_mode=args.deps)
         print(f"snapshot {snapshot_id} ready")
     elif args.cmd == "repo-add":
         import psycopg
 
         from osprey.config import settings
+        from osprey.names import safe_repo_name
+        args.name = safe_repo_name(args.name)
         with psycopg.connect(settings.db_dsn) as conn:
             conn.execute(
                 "INSERT INTO repos (org_id, name, git_url)"

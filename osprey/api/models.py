@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -183,9 +184,9 @@ class DiffEdge(BaseModel):
 
 
 class IndexRequestIn(BaseModel):
-    git_url: str
-    name: str | None = None
-    ref: str | None = None      # branch, tag, or commit sha; default HEAD
+    git_url: str = Field(max_length=500)
+    name: str | None = Field(default=None, max_length=100)
+    ref: str | None = Field(default=None, max_length=120)
 
 
 class IndexJobOut(BaseModel):
@@ -247,10 +248,17 @@ class DocSearchHit(BaseModel):
     score: float
 
 
+class AskMessage(BaseModel):
+    # role is a closed set: a client must not be able to inject a 'system'
+    # turn and overwrite the scope guardrail, nor fabricate 'tool' results
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=8000)
+
+
 class AskIn(BaseModel):
     snapshot_id: int
-    question: str
-    history: list[dict] = []
+    question: str = Field(min_length=1, max_length=4000)
+    history: list[AskMessage] = Field(default_factory=list, max_length=20)
 
 
 class AskTraceStep(BaseModel):
