@@ -20,12 +20,14 @@ optional surface on top.
 
 ## Features
 
-- **Overview dashboard**: files, languages, symbol composition, circular
-  dependencies, likely-unused code, and the most depended-on symbols -
-  with deltas against the previously analyzed version.
-- **Explore**: interactive dependency map (drill-down by folder, focus
-  spotlighting, plain-language insight for the focused node), blast-radius
-  rings, and static call-sequence diagrams.
+- **Overview dashboard**: files, languages, folders and dependencies,
+  entry points, circular dependencies, likely-unused code, and the most
+  depended-on symbols - with deltas against the previously analyzed
+  version.
+- **Explore**: an interactive dependency map (drill-down by folder, focus
+  spotlighting, a plain-language insight for the focused folder), plus a
+  **Focus** lens that answers, for any symbol, "what uses this" (blast
+  radius) and "what this uses" (static call view) with one toggle.
 - **Documentation**: persona-targeted docs (Developer, SRE / On-call,
   QA / Tester) synthesized from the same graph facts. Citations are
   verified `path:line` by `path:line`; unverifiable claims are retried,
@@ -129,6 +131,27 @@ osprey-gate check --repo myrepo --base previous --head latest \
 Violations come with evidence (`file:line` of the offending import or
 call). The gate fails open by default; `--fail-closed` inverts that.
 
+## Security and hosting a demo
+
+Osprey is built to analyze untrusted code without trusting it: remote
+repos are indexed in a sandbox (network off, install scripts disabled,
+size-capped), the API is read-only with a host allowlist and bounded
+inputs, and the AI surfaces only call typed tools. See
+[SECURITY.md](SECURITY.md) for the full trust-boundary breakdown and the
+operator checklist (set a token, terminate TLS at a proxy, rate-limit
+there, keep the container executor on).
+
+To host a public, guided instance, enable **demo mode**: browsing sits
+behind an access code, direct indexing and doc generation are disabled,
+and visitors submit repo requests you fulfill by hand.
+
+```bash
+OSPREY_DEMO_ACCESS_CODE=<code> docker compose \
+  -f docker-compose.yml -f deploy/compose.demo.yml up -d
+
+docker compose exec api osprey requests   # review; --mark <id> --status indexed
+```
+
 ## Use Osprey from your IDE (MCP)
 
 Osprey ships an [MCP](https://modelcontextprotocol.io) server that exposes
@@ -181,6 +204,8 @@ file). The important ones:
 | `OSPREY_MAX_REPO_MB` | `500` | size cap for fetched repos |
 | `OSPREY_EXECUTOR` | `local` | `container` sandboxes every index stage |
 | `OSPREY_RETENTION_KEEP` | `30` | ready snapshots kept per repo (`osprey gc`) |
+| `OSPREY_DEMO_MODE` | `false` | guided demo: browse-only, requests instead of indexing |
+| `OSPREY_DOCS_AUTO_REFRESH` | `true` | refresh docs via the staleness loop after each index |
 | `OSPREY_USER_LABEL` | `Local Dev` | name shown in the top-right chip |
 
 ## Development
@@ -197,7 +222,8 @@ cd web && npm install && npm run dev   # UI dev server on :5173
 Run the tests:
 
 ```bash
-uv run pytest -q             # 65 tests: classifier, gate, API, URL guards
+uv run pytest -q             # classifier, gate, API, URL/name guards,
+                             # ask-history limits, staleness selection
 ```
 
 ## Project layout
@@ -214,8 +240,9 @@ osprey/
 │   ├── mcp/           #   MCP server for AI agents
 │   └── scip/          #   SCIP protobuf reader
 ├── web/               # React + Sigma.js UI
-├── deploy/            # Dockerfiles
+├── deploy/            # Dockerfiles + compose.demo.yml overlay
 ├── tests/
+├── SECURITY.md        # trust boundaries + operator checklist
 └── ARCHITECTURE.md    # full design, schema, decision log
 ```
 
