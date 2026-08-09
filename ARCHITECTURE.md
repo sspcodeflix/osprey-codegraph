@@ -780,3 +780,72 @@ outline (deterministic) → synthesize (grounded LLM) → verify (graph check)
 - **Verification coverage** — the checker validates structural claims, not
   every English sentence; scope honestly (citations, diagrams, dependency
   claims) and label the rest as narrative.
+
+## 19. Post-v1 implementation notes (shipped)
+
+**Status:** shipped (2026-08-09). Deltas beyond the original design above,
+recorded so this document stays true to the running system.
+
+### 19.1 Docs staleness loop: shipped and automatic (was §18 D1 design)
+
+After every index job the worker auto-enqueues a docs refresh for each
+persona already documented on that repo (`OSPREY_DOCS_AUTO_REFRESH`,
+default on). `generate_docs` diffs the new snapshot against the last
+documented one (changed stable symbols incl. edge endpoints, touched
+modules, module-edge changes, entry-point set, hotspot membership) and
+rewrites only pages whose inputs changed; unchanged pages carry forward
+verbatim at **zero LLM tokens**, after re-checking their citations against
+the new snapshot (line-drift guard). Measured: an identical re-index
+carried 18/18 pages at 0 completion tokens; a real minor-release diff
+regenerated only the pages whose inputs moved.
+
+### 19.2 Docs grounding: a second gate
+
+Beyond citation verification, a `FACTS_LEAK` check rejects drafts that quote
+internal data-plumbing field names (totals, module_dependencies, …) in
+prose, with one corrective retry then a stats note. House style forbids
+em-dashes in all user-facing text, enforced by a pipeline post-pass on LLM
+output. Diagrams remain compiled-from-edges only.
+
+### 19.3 AI layer: context-aware, guardrailed (extends §10)
+
+Ask is a floating assistant on every page. It only calls typed tools
+(never generates queries), shows its tool trace, and enforces a **scope
+guardrail** in the system prompt: it refuses anything not about the indexed
+codebase and will not write new code. Client-supplied chat history is
+constrained to user/assistant roles (a caller cannot inject a `system` turn
+to bypass the guardrail). It also receives a short **on-screen context**
+string (current space, lens, and selected symbol/folder) so "what does this
+do?" resolves to the selection, used only as a deixis hint; the model
+still verifies with tools.
+
+### 19.4 Security hardening (extends §11)
+
+Implemented and scan-clean (`bandit` 0 High/0 Med, `npm audit` 0 vulns;
+see `SECURITY.md` for the trust-boundary breakdown and operator checklist):
+
+- Repo names are validated to a single safe path segment (`osprey/names.py`)
+  at every entry point (they become `repo_root / name` on the worker.
+- Bearer-token checks are timing-safe (`hmac.compare_digest`), centralized.
+- Ask/index inputs are length-bounded (question, history size + per-message,
+  git_url); markdown renders with raw HTML disabled and URL sanitization.
+- The ref charset already blocks git option injection; the host allowlist
+  blocks SSRF (both pre-existing, retained).
+
+### 19.5 Demo mode: hosting a guided public instance (extends §13)
+
+`OSPREY_DEMO_MODE` turns an instance into a browse-only demo behind a shared
+access code (`OSPREY_API_TOKEN`): direct indexing and doc generation return
+403, and visitors submit **repo requests** (`repo_requests` table) that the
+operator fulfills by hand (`osprey requests`). Overlay:
+`deploy/compose.demo.yml`.
+
+### 19.6 UI evolution
+
+Reorganized by intent into three spaces: Overview (dashboard + Health/
+Cleanup/Changes drill-ins), Explore (dependency Map + a merged **Focus**
+lens: "what uses this" / "what this uses"), and Documentation (persona
+docs). Global `/` or ⌘K palette; collapsible sidebar; charts and a ranked
+hotspots leaderboard on Overview; navy + purple theme with red reserved for
+risk. The MCP server is documented for in-IDE use (Claude / Cursor /
+Copilot) in the README.
