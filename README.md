@@ -36,9 +36,11 @@ optional surface on top.
   automatically - a structural diff decides which pages' inputs changed,
   and only those are rewritten. Unchanged pages carry forward at zero
   token cost (an identical re-index costs exactly 0 LLM tokens).
-- **Ask**: a chat drawer that can only use typed graph tools - every
-  answer shows which checks it ran, and it refuses questions that are not
-  about the indexed codebase.
+- **Ask**: a floating chat available on every page that can only use typed
+  graph tools - every answer shows which checks it ran, it refuses
+  questions that are not about the indexed codebase, and it knows what you
+  are currently looking at, so "what does this do?" resolves to the
+  symbol or folder you have selected (then verifies it with tools).
 - **Governance** (`osprey-gate`): declarative architecture rules (layers,
   deny edges, no new cycles) evaluated as a structural diff between two
   snapshots - built for CI, with file:line evidence and a markdown
