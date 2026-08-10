@@ -49,7 +49,7 @@ export function Ask({ snap, focusName, context }: {
   return (
     <div className="view">
       <p className="explain">Ask about this codebase in plain English. The
-        assistant answers only from Osprey's verified graph tools - every
+        assistant answers only from Osprey CodeGraph's verified graph tools - every
         answer shows which checks it ran. It won't help with anything
         outside this repository.</p>
       <div className="scroll chat">

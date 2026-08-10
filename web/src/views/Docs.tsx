@@ -59,7 +59,7 @@ export function Docs({ snap, persona, generating, onPersona, demo }: {
         ) : (
           <div className="persona-pick">
             <h2>Who is this documentation for?</h2>
-            <p className="muted">Osprey writes each audience its own pages
+            <p className="muted">Osprey CodeGraph writes each audience its own pages
               from the same code graph: diagrams compiled from real
               dependencies, every <code>file:line</code> citation verified
               against the snapshot before publishing.</p>

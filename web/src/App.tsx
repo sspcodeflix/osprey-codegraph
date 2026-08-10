@@ -255,7 +255,7 @@ export default function App() {
     return (
       <div className="cta-card">
         <span className="brandmark cta"><LogoMark size={26} /></span>
-        <h2><span className="brand">Osprey</span> demo</h2>
+        <h2><span className="brand">Osprey CodeGraph</span> demo</h2>
         <p className="muted">Enter your access code to explore. Don't have
           one yet? Request access and we'll send you an invite.</p>
         <input type="password" placeholder="access code" value={code}
@@ -274,7 +274,7 @@ export default function App() {
         <aside className="sidenav">
           <h1 className="brandlock">
             <span className="brandmark"><LogoMark /></span>
-            <span className="brand wordmark">Osprey</span>
+            <span className="brand wordmark">Osprey CodeGraph</span>
             <button className="navtoggle" onClick={toggleNav}
                     title="Hide sidebar">
               <CollapseIcon /></button>
@@ -431,7 +431,7 @@ export default function App() {
                 ? <div className="cta-card">
                     <span className="brandmark cta"><LogoMark size={26} /></span>
                     <h2>Understand any codebase in minutes</h2>
-                    <p className="muted">Paste a repository URL and Osprey maps
+                    <p className="muted">Paste a repository URL and Osprey CodeGraph maps
                       its structure, finds the risks, and writes grounded
                       documentation - every claim checked against the code.</p>
                     <button className="primary" onClick={() => setAdding(true)}>
@@ -483,7 +483,7 @@ export default function App() {
             <button className={`ask-fab ${askOpen ? "open" : ""}`}
                     onClick={() => setAskOpen(!askOpen)}
                     title="Ask questions in plain English"
-                    aria-label="Ask Osprey">
+                    aria-label="Ask Osprey CodeGraph">
               {askOpen ? "✕" : "✦"}
             </button>
           </>
