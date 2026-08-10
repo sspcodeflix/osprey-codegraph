@@ -1,8 +1,8 @@
-# Osprey - System Architecture
+# Osprey CodeGraph - System Architecture
 
 **Version:** 0.1 (draft) · **Date:** 2026-08-08 · **Status:** pre-implementation
 
-Osprey indexes codebases into a deterministic, per-commit knowledge graph stored
+Osprey CodeGraph indexes codebases into a deterministic, per-commit knowledge graph stored
 in Postgres, and serves three products on that one core: visual dependency
 analysis, CI architecture governance, and an AI query interface.
 
@@ -21,11 +21,11 @@ log; when a decision here is revisited, update both.
 3. **Immutable snapshots.** A snapshot = one repo at one commit, indexed once,
    never mutated. Everything downstream (diffing, CI gating, caching,
    reproducibility) falls out of this.
-4. **Read-only core.** Osprey analyses code; it never edits it, and it never
+4. **Read-only core.** Osprey CodeGraph analyses code; it never edits it, and it never
    runs shell commands on behalf of a model. Anything that mutates a repo is a
    different product with a different trust model.
 5. **Boring infrastructure.** Postgres, containers, one queue. Every
-   infrastructure choice must be operable by a team that has never seen Osprey.
+   infrastructure choice must be operable by a team that has never seen Osprey CodeGraph.
 6. **Air-gapped is first-class.** Every feature must have a documented
    local-only path, verified in CI - not a footnote.
 
@@ -268,7 +268,7 @@ single transaction that inserts into the real tables and flips `status` to
      the file. Affected files carry `precision='structural'`; their symbols
      and edges surface in every API response with that flag, and the UI renders
      them visually distinct. A compiler-grade indexer degrades grumpily;
-     this tier makes Osprey degrade gracefully - partial facts beat holes,
+     this tier makes Osprey CodeGraph degrade gracefully - partial facts beat holes,
      as long as they are honestly labeled.
 5. **classify** - the call-site classifier (§6): a tree-sitter pass that tags
    each SCIP reference occurrence as *call* vs *bare reference*, and extracts
@@ -288,8 +288,8 @@ explicitly out of scope until the whole-project cost is proven to hurt (§15).
 ## 6. Call-graph derivation
 
 SCIP deliberately has no call edges - it records symbols and role-tagged
-occurrences (definition / import / read / write). Osprey derives edges in two
-steps. This is the only place Osprey interprets syntax itself, and it is
+occurrences (definition / import / read / write). Osprey CodeGraph derives edges in two
+steps. This is the only place Osprey CodeGraph interprets syntax itself, and it is
 ~hundreds of lines per language, not tens of thousands.
 
 **Step 1 - attribution.** Every reference occurrence is attributed to the
@@ -397,7 +397,7 @@ rules:
 the diff: `deny` rules check module_edges; `no_new_cycles` compares cycle
 counts; `public_api_freeze` checks the exported-symbol diff. Violations report
 the rule, the offending edge, and the example site (`first_file_id:first_line`).
-Exit 1 on any `error`. The gate never blocks on Osprey being down - it fails
+Exit 1 on any `error`. The gate never blocks on Osprey CodeGraph being down - it fails
 open with a loud warning (configurable to fail closed).
 
 ### 8.3 Entry points & dead code
@@ -599,9 +599,9 @@ DSM, diff view).
    org, re-baseline explicitly on upgrade (this is why `indexer_versions` is
    part of the snapshot identity).
 
-## 17. Provenance: what Osprey takes from code-graph-rag
+## 17. Provenance: what Osprey CodeGraph takes from code-graph-rag
 
-Osprey began as a study of [code-graph-rag](https://github.com/vitali87/code-graph-rag)
+Osprey CodeGraph began as a study of [code-graph-rag](https://github.com/vitali87/code-graph-rag)
 (MIT-licensed). It is not a fork - no code is inherited - but five of its ideas
 are deliberately harvested, and honesty about that lineage keeps the decision
 log meaningful.
@@ -609,10 +609,10 @@ log meaningful.
 **Taken:**
 
 1. **CALLS vs REFERENCES as distinct edge kinds** (§6). Their tree-sitter
-   heritage got this right; SCIP alone cannot make the distinction. Osprey's
+   heritage got this right; SCIP alone cannot make the distinction. Osprey CodeGraph's
    classifier exists to preserve it.
 2. **Graceful degradation on unparseable projects** (§5, Decision 11). Their
-   all-tree-sitter design works on any source text; Osprey's structural
+   all-tree-sitter design works on any source text; Osprey CodeGraph's structural
    fallback tier buys that resilience back, with a `precision` flag so
    heuristic facts never masquerade as compiler facts.
 3. **Entry-point detection powering dead code and endpoint-aware impact**
@@ -623,14 +623,14 @@ log meaningful.
    attribution) into M0 classifier fixtures rather than re-discovered.
 5. **The YAML-pattern language tier** (§15). Their Ruby support demonstrated a
    language can join the graph from a single ast-grep pattern file - the
-   adoption path for long-tail languages in Osprey's fallback tier.
+   adoption path for long-tail languages in Osprey CodeGraph's fallback tier.
 
 Their **taint/data-flow schema** (`FLOWS_TO` with `kind`/`via` properties,
 Resource nodes for files/env/network/db) is recorded as the reference design
 for a future phase - the model is sound; the implementation is not portable.
 
 Their **assurance-case security documentation** (explicit threat model, trust
-boundaries, "what users should not expect") is adopted as practice: Osprey's
+boundaries, "what users should not expect") is adopted as practice: Osprey CodeGraph's
 security docs follow that format from day one.
 
 **Deliberately not taken:** LLM-generated Cypher (Decision 5 is its
@@ -639,21 +639,21 @@ database (Decision 3), hand-written per-language resolution (Decision 1), and
 live file-watching (snapshot cadence instead). Each rejection is argued in the
 decision log, not assumed.
 
-## 18. Osprey Docs - the AI documentation platform (design)
+## 18. Osprey CodeGraph Docs - the AI documentation platform (design)
 
 **Status:** design (2026-08-08), pre-implementation. This section extends the
 system with a documentation product built ON the graph, not beside it.
 
 ### 18.1 Product definition & positioning
 
-Osprey Docs ingests a repository (the existing pipeline), then uses LLM
+Osprey CodeGraph Docs ingests a repository (the existing pipeline), then uses LLM
 agents to synthesize **structured, persona-targeted documentation with
 diagrams**, persists it per snapshot, and serves it through the portal with
 RAG chat.
 
 The category (auto-wiki + repo chat) is contested - DeepWiki, Swimm,
 Mintlify. The wedge is that competitors are **RAG-over-text**: their prose
-and diagrams are what an LLM *guessed* about structure. Osprey docs are
+and diagrams are what an LLM *guessed* about structure. Osprey CodeGraph docs are
 **grounded in the deterministic graph**:
 
 1. **Diagrams are compiled, not imagined** - every Mermaid diagram is

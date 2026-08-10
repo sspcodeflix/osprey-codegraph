@@ -1,5 +1,5 @@
 [project]
-name = "osprey"
+name = "osprey-codegraph"
 version = "0.1.0"
 description = "Code-graph platform: deterministic per-commit knowledge graphs for enterprises"
 license = { text = "Apache-2.0" }

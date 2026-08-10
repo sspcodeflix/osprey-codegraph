@@ -1,6 +1,6 @@
 # Security
 
-Osprey is designed to analyze untrusted source code without trusting it,
+Osprey CodeGraph is designed to analyze untrusted source code without trusting it,
 and to serve enterprises that cannot send code to a third party. This
 document describes the trust boundaries, the controls at each, and the
 operator's responsibilities for a hardened deployment.
@@ -68,14 +68,14 @@ operator's responsibilities for a hardened deployment.
 
 ## Operator responsibilities
 
-These are deployment-level controls Osprey cannot enforce for you:
+These are deployment-level controls Osprey CodeGraph cannot enforce for you:
 
 1. **Set `OSPREY_API_TOKEN`.** An unset token means no auth. For the
    public demo posture, also set `OSPREY_DEMO_MODE=true` (disables direct
    indexing and doc generation; visitors file requests instead).
-2. **Terminate TLS at a reverse proxy.** Osprey binds loopback by
+2. **Terminate TLS at a reverse proxy.** Osprey CodeGraph binds loopback by
    default; expose it only through a proxy that adds HTTPS.
-3. **Rate-limit at the proxy.** Osprey does not rate-limit itself. Put a
+3. **Rate-limit at the proxy.** Osprey CodeGraph does not rate-limit itself. Put a
    limit on `/v1/ask`, `/v1/repos/index`, and `/v1/repo-requests` to
    bound abuse and token spend.
 4. **Keep `OSPREY_EXECUTOR=container`** for any instance that indexes

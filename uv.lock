@@ -389,7 +389,7 @@ wheels = [
 ]
 
 [[package]]
-name = "osprey"
+name = "osprey-codegraph"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

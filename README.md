@@ -1,6 +1,6 @@
-# 🦅 Osprey
+# 🦅 Osprey CodeGraph
 
-**Understand any codebase in minutes.** Osprey indexes repositories into a
+**Understand any codebase in minutes.** Osprey CodeGraph indexes repositories into a
 compiler-grade dependency graph, then serves visual exploration, grounded
 AI documentation, architecture governance, and a fact-checked chat on one
 core - self-hosted, local-first, air-gap friendly.
@@ -160,7 +160,7 @@ piggyback on the same pipeline.
 
 ## Security and hosting a demo
 
-Osprey is built to analyze untrusted code without trusting it: remote
+Osprey CodeGraph is built to analyze untrusted code without trusting it: remote
 repos are indexed in a sandbox (network off, install scripts disabled,
 size-capped), the API is read-only with a host allowlist and bounded
 inputs, and the AI surfaces only call typed tools. See
@@ -179,15 +179,15 @@ OSPREY_DEMO_ACCESS_CODE=<code> docker compose \
 docker compose exec api osprey requests   # review; --mark <id> --status indexed
 ```
 
-## Use Osprey from your IDE (MCP)
+## Use Osprey CodeGraph from your IDE (MCP)
 
-Osprey ships an [MCP](https://modelcontextprotocol.io) server that exposes
+Osprey CodeGraph ships an [MCP](https://modelcontextprotocol.io) server that exposes
 the graph as typed tools, so an AI assistant in your editor can answer
 "who calls this", "what breaks if I change it", "where are the cycles"
 with **verified** results instead of guesses. The model selects tools and
 fills validated arguments; it never writes a query.
 
-The server (`osprey-mcp`) talks to a running Osprey API over
+The server (`osprey-mcp`) talks to a running Osprey CodeGraph API over
 `OSPREY_API_URL` (and `OSPREY_API_TOKEN` if the API requires one). Point
 your assistant at it:
 
@@ -209,7 +209,7 @@ your assistant at it:
 
 **Cursor** (`.cursor/mcp.json`) and **VS Code Copilot agent mode**
 (`.vscode/mcp.json`) use the same shape. After registering, ask your
-assistant a question about an indexed repo and it will call Osprey's
+assistant a question about an indexed repo and it will call Osprey CodeGraph's
 tools; results are capped and carry `file:line` provenance.
 
 Tools available: `list_repos`, `list_snapshots`, `search_symbols`,

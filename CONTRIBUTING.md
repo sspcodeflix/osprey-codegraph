@@ -1,12 +1,12 @@
-# Contributing to Osprey
+# Contributing to Osprey CodeGraph
 
-Thanks for your interest in Osprey.
+Thanks for your interest in Osprey CodeGraph.
 
 ## License of contributions
 
-Osprey is licensed under [Apache-2.0](LICENSE). Unless you explicitly
+Osprey CodeGraph is licensed under [Apache-2.0](LICENSE). Unless you explicitly
 state otherwise, any contribution you intentionally submit for inclusion
-in Osprey is licensed under Apache-2.0, as defined in Section 5 of the
+in Osprey CodeGraph is licensed under Apache-2.0, as defined in Section 5 of the
 license, without any additional terms or conditions.
 
 ## How to contribute
