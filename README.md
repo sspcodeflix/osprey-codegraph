@@ -8,7 +8,7 @@ core - self-hosted, local-first, air-gap friendly.
 ![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/react-18-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/postgres-16%20%2B%20pgvector-4169E1?logo=postgresql&logoColor=white)
-![License](https://img.shields.io/badge/license-proprietary-red)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 
 Facts come from compilers (via [SCIP](https://github.com/sourcegraph/scip)),
 not heuristics. Diagrams are compiled from real edges, never drawn by a
@@ -290,4 +290,4 @@ osprey/
 
 ## License
 
-Proprietary. All rights reserved.
+Apache-2.0. See [LICENSE](LICENSE).
