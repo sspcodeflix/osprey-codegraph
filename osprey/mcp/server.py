@@ -66,9 +66,16 @@ def resolve(repo: str, ref: str) -> dict:
         if len(snaps) < 2:
             raise ValueError(f"repo {repo!r} has only one snapshot")
         return snaps[1]
+    # Exact snapshot-id matches win over sha prefixes: a short numeric ref
+    # like "7" must never resolve to a different snapshot whose commit sha
+    # merely starts with that digit.
     for s in snaps:
-        if str(s["id"]) == ref or s["commit_sha"].startswith(ref):
+        if str(s["id"]) == ref:
             return s
+    if len(ref) >= 4:
+        for s in snaps:
+            if s["commit_sha"].startswith(ref):
+                return s
     raise ValueError(f"no ready snapshot of {repo!r} matches {ref!r}")
 
 

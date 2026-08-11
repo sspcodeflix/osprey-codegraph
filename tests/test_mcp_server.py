@@ -39,6 +39,24 @@ class TestResolve:
         with pytest.raises(ValueError, match="no ready snapshot"):
             S.resolve("hono", "deadbeef")
 
+    def test_id_beats_sha_prefix(self, monkeypatch):
+        # Regression: ref "5" must resolve to snapshot id 5 even when a
+        # NEWER snapshot's commit sha starts with "5" - the old single-pass
+        # loop returned the sha-prefix match first.
+        snaps = [
+            {"id": 8, "commit_sha": "5f9c489abc", "status": "ready"},
+            {"id": 5, "commit_sha": "aa7c9e5def", "status": "ready"},
+        ]
+        monkeypatch.setattr(S, "get", lambda path, **kw: snaps)
+        assert S.resolve("hono", "5")["id"] == 5
+
+    def test_short_sha_prefix_rejected(self, monkeypatch):
+        # A 1-3 char non-id ref must not silently match a sha prefix.
+        snaps = [{"id": 8, "commit_sha": "e5eb9bfabc", "status": "ready"}]
+        monkeypatch.setattr(S, "get", lambda path, **kw: snaps)
+        with pytest.raises(ValueError, match="no ready snapshot"):
+            S.resolve("hono", "e5e")
+
 
 def test_all_tools_registered():
     import asyncio
