@@ -271,6 +271,7 @@ osprey/
 ├── examples/          # CI workflow: index-on-merge docs refresh
 ├── tests/
 ├── SECURITY.md        # trust boundaries + operator checklist
+├── TECH_STACK.md      # the stack and why each tool was chosen
 └── ARCHITECTURE.md    # full design, schema, decision log
 ```
 
